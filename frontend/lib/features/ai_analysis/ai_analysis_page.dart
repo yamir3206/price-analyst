@@ -20,7 +20,7 @@ class AiAnalysisPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          InfoCard(
+          const InfoCard(
             title: 'لایه تفسیر اختیاری',
             icon: Icons.auto_awesome_outlined,
             child: Text(
