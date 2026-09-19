@@ -20,7 +20,11 @@ class Settings(BaseSettings):
     max_gemini_output_tokens: int = Field(default=1000, ge=128)
     max_offers_to_analyze: int = Field(default=30, ge=1)
     gemini_timeout_seconds: float = Field(default=20.0, gt=0)
-    analysis_version: str = "1"
+    gemini_cache_ttl_seconds: int = Field(default=3600, ge=0)
+    gemini_cache_max_entries: int = Field(default=256, ge=1)
+    gemini_concurrency: int = Field(default=2, ge=1)
+    gemini_min_interval_seconds: float = Field(default=0.0, ge=0)
+    analysis_version: str = "2"
 
     source_timeout_seconds: float = Field(default=10.0, gt=0)
     max_search_candidates: int = Field(default=100, ge=1)

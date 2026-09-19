@@ -16,6 +16,16 @@ class SnapshotCache(Protocol):
         ...
 
 
+class AIAnalysisCache(Protocol):
+    async def get(self, key: str) -> AIAnalysis | None:
+        ...
+
+    async def put(self, key: str, value: AIAnalysis, ttl_seconds: int) -> None:
+        ...
+
+
 class GeminiClient(Protocol):
+    enabled: bool
+
     async def analyze(self, dataset: CompactAnalysisDataset) -> AIAnalysis:
         ...

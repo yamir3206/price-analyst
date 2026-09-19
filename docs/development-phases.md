@@ -55,7 +55,18 @@ Currencies are never silently converted. Unknown-currency prices are retained in
 
 ## Phase 5 — AI layer
 
-Implement compact offer selection, token budgeting, Gemini client, structured validation, cache, request coalescing, and AI UI.
+Implemented as an optional post-analysis layer:
+
+- Bounded, deterministic compact offer selection with opportunity/match relevance and source diversity
+- Character/token estimation and deterministic reduction of offer text and statistics
+- Server-side Gemini REST client with timeout, bounded retry, JSON-only response parsing, and strict Pydantic validation
+- Output separation for facts, inferences, and uncertainties, plus offer-reference validation
+- Successful-result TTL caching and identical in-flight request coalescing
+- Explicit `POST /api/v1/searches/analysis` trigger; ordinary searches remain Gemini-free by default
+- Flutter request state and structured AI result/status UI
+- Phase 5 unit and integration tests and configuration/documentation
+
+Gemini remains disabled when `PRICE_ANALYST_GEMINI_API_KEY` is empty. The process-local cache is intentionally a bounded Phase 5 boundary; durable cache storage and broader operational hardening are not part of this phase.
 
 ## Phase 6 — wholesale and hardening
 

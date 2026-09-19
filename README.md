@@ -4,7 +4,7 @@ Price Analyst is a cross-platform price-intelligence application for Android, Wi
 
 ## Repository status
 
-Phases 1–4 are implemented. The repository currently contains:
+Phases 1–5 are implemented. The repository currently contains:
 
 - A typed FastAPI backend foundation
 - Domain models for queries, offers, source health, snapshots, opportunities, and AI analysis
@@ -14,6 +14,7 @@ Phases 1–4 are implemented. The repository currently contains:
 - Bounded retries with exponential backoff, per-source pacing, and temporary source circuit breaking
 - Partial-result responses with stale cached offers during refresh failures
 - Deterministic local matching, per-currency statistics, classifications, chart data, and opportunity references
+- Optional server-side Gemini interpretation with bounded input, strict output validation, cache, coalescing, and an explicit analysis endpoint
 - SQLite/PostgreSQL-compatible persistence scaffolding
 - A Flutter application shell with RTL support and local statistics, chart, and opportunity views
 - Backend tests and frontend test scaffolding
@@ -36,7 +37,7 @@ FastAPI API
        └── Optional Gemini analysis
 ```
 
-The full deterministic dataset and the compact Gemini dataset are separate representations. Gemini never receives raw HTML and the application remains useful when Gemini or a marketplace is unavailable.
+The full deterministic dataset and the compact Gemini dataset are separate representations. Gemini never receives raw HTML, product URLs, or unnecessary adapter fields, and the application remains useful when Gemini or a marketplace is unavailable. Ordinary searches do not call Gemini; use `POST /api/v1/searches/analysis` for the explicit optional interpretation step.
 
 ## Backend development
 
@@ -48,7 +49,7 @@ pytest backend/tests
 uvicorn price_analyst.main:app --app-dir backend/src --host 0.0.0.0 --port 8000 --reload
 ```
 
-The health endpoint is available at `GET /api/v1/health`. A Phase 1 search request normalizes the query and returns an explicit no-adapters-configured response; it does not claim to have collected marketplace data.
+The health endpoint is available at `GET /api/v1/health`. With no adapters enabled, a normal search request normalizes the query and returns an explicit no-adapters-configured response; it does not claim to have collected marketplace data. The optional AI layer is requested separately through `POST /api/v1/searches/analysis`.
 
 Copy `.env.example` to `.env` for local configuration. Gemini credentials belong only on the backend and must never be placed in the Flutter application.
 

@@ -10,7 +10,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from price_analyst import __version__
-from price_analyst.ai.client import DisabledGeminiClient
+from price_analyst.ai.cache import InMemoryAIAnalysisCache
+from price_analyst.ai.client import DisabledGeminiClient, GeminiHttpClient
+from price_analyst.ai.service import AIAnalysisService, AIClient
 from price_analyst.api.router import api_router
 from price_analyst.application.search_pipeline import SearchPipeline
 from price_analyst.application.source_health import SourceHealthTracker
@@ -90,7 +92,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             application.state.snapshot_cache = InMemorySnapshotCache()
             application.state.source_health = health
             application.state.rate_limiter = rate_limiter
-            application.state.gemini_client = DisabledGeminiClient()
+            gemini_client: AIClient
+            if app_settings.gemini_configured:
+                api_key = app_settings.gemini_api_key
+                assert api_key is not None
+                gemini_client = GeminiHttpClient(
+                    http_client,
+                    api_key=api_key.get_secret_value(),
+                    model=app_settings.gemini_model,
+                    timeout_seconds=app_settings.gemini_timeout_seconds,
+                    max_output_tokens=app_settings.max_gemini_output_tokens,
+                    retry_policy=retry_policy,
+                )
+            else:
+                gemini_client = DisabledGeminiClient()
+            application.state.gemini_client = gemini_client
+            application.state.ai_analysis_service = AIAnalysisService(
+                gemini_client,
+                cache=InMemoryAIAnalysisCache(
+                    max_entries=app_settings.gemini_cache_max_entries,
+                ),
+                cache_ttl_seconds=app_settings.gemini_cache_ttl_seconds,
+                max_offers=app_settings.max_offers_to_analyze,
+                max_input_tokens=app_settings.max_gemini_input_tokens,
+                prompt_version=f"price-analysis-v{app_settings.analysis_version}",
+                model=app_settings.gemini_model,
+                max_concurrency=app_settings.gemini_concurrency,
+                min_interval_seconds=app_settings.gemini_min_interval_seconds,
+            )
             application.state.search_pipeline = SearchPipeline(
                 registry,
                 cache=application.state.snapshot_cache,
@@ -103,6 +132,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 source_concurrency=app_settings.source_concurrency,
                 analysis_match_threshold=app_settings.analysis_match_threshold,
                 analysis_max_opportunities=app_settings.analysis_max_opportunities,
+                ai_service=application.state.ai_analysis_service,
             )
             yield
 

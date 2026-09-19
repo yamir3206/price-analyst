@@ -13,7 +13,7 @@ class StoredSearch(Base):
 
     search_id: Mapped[str] = mapped_column(String(36), primary_key=True)
     normalized_query: Mapped[str] = mapped_column(String(500), index=True)
-    payload: Mapped[dict] = mapped_column(JSON)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON)
     dataset_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 

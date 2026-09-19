@@ -21,8 +21,20 @@ class ApiClient {
   final http.Client _client;
 
   Future<SearchSnapshot> search(String query, {bool refresh = false}) async {
+    return _postSnapshot('/api/v1/searches', query, refresh: refresh);
+  }
+
+  Future<SearchSnapshot> analyze(String query, {bool refresh = false}) async {
+    return _postSnapshot('/api/v1/searches/analysis', query, refresh: refresh);
+  }
+
+  Future<SearchSnapshot> _postSnapshot(
+    String path,
+    String query, {
+    required bool refresh,
+  }) async {
     final response = await _client.post(
-      AppConfig.apiUri('/api/v1/searches'),
+      AppConfig.apiUri(path),
       headers: const {'content-type': 'application/json'},
       body: jsonEncode({'query': query, 'refresh': refresh}),
     );

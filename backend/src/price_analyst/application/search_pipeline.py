@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 import httpx
 
+from price_analyst.ai.service import AIAnalysisService
 from price_analyst.analysis.service import analyze_offers
 from price_analyst.application.ports import SnapshotCache
 from price_analyst.application.source_health import SourceHealthTracker
@@ -20,7 +21,8 @@ from price_analyst.collectors.interfaces import MarketplaceAdapter, SearchContex
 from price_analyst.collectors.rate_limit import SourceRateLimiter
 from price_analyst.collectors.registry import AdapterRegistry
 from price_analyst.collectors.relevance import rank_candidates
-from price_analyst.domain.enums import CollectionStatus, Marketplace, SourceState
+from price_analyst.domain.ai_analysis import AIAnalysisEnvelope
+from price_analyst.domain.enums import AIAnalysisStatus, CollectionStatus, Marketplace, SourceState
 from price_analyst.domain.offers import Offer, SearchCandidate
 from price_analyst.domain.queries import NormalizedQuery
 from price_analyst.domain.snapshots import SearchSnapshot
@@ -61,6 +63,7 @@ class SearchPipeline:
         source_concurrency: int = 2,
         analysis_match_threshold: float = 0.55,
         analysis_max_opportunities: int = 20,
+        ai_service: AIAnalysisService | None = None,
     ) -> None:
         if not 0 <= analysis_match_threshold <= 1:
             raise ValueError("analysis_match_threshold must be between zero and one")
@@ -75,13 +78,20 @@ class SearchPipeline:
         self._source_concurrency = max(1, source_concurrency)
         self._analysis_match_threshold = analysis_match_threshold
         self._analysis_max_opportunities = max(0, analysis_max_opportunities)
+        self._ai_service = ai_service
 
-    async def run(self, query_text: str, *, refresh: bool = False) -> SearchSnapshot:
+    async def run(
+        self,
+        query_text: str,
+        *,
+        refresh: bool = False,
+        analyze: bool = False,
+    ) -> SearchSnapshot:
         query = normalize_query(query_text)
         cache_key = self._cache_key(query)
         previous = await self._cache.get(cache_key)
         if previous is not None and not refresh:
-            return previous
+            return await self._maybe_analyze(cache_key, previous, analyze)
 
         search_id = uuid4()
         request_id = str(search_id)
@@ -94,7 +104,7 @@ class SearchPipeline:
         if not configured:
             snapshot = self._snapshot_without_adapters(search_id, query, now, previous)
             await self._cache.put(cache_key, snapshot, self._cache_ttl_seconds)
-            return snapshot
+            return await self._maybe_analyze(cache_key, snapshot, analyze)
 
         source_gate = asyncio.Semaphore(self._source_concurrency)
 
@@ -175,7 +185,29 @@ class SearchPipeline:
         )
         if fresh_success_count > 0 or stale_source_count > 0:
             await self._cache.put(cache_key, snapshot, self._cache_ttl_seconds)
-        return snapshot
+        return await self._maybe_analyze(cache_key, snapshot, analyze)
+
+    async def _maybe_analyze(
+        self,
+        cache_key: str,
+        snapshot: SearchSnapshot,
+        requested: bool,
+    ) -> SearchSnapshot:
+        if not requested:
+            return snapshot
+        if snapshot.ai_analysis is not None and snapshot.ai_analysis.result is not None:
+            return snapshot
+        if self._ai_service is None:
+            envelope = AIAnalysisEnvelope(
+                status=AIAnalysisStatus.DISABLED,
+                error_code="gemini_disabled",
+                error_message="Gemini analysis is disabled by configuration.",
+            )
+        else:
+            envelope = await self._ai_service.analyze_snapshot(snapshot)
+        analyzed = snapshot.model_copy(update={"ai_analysis": envelope})
+        await self._cache.put(cache_key, analyzed, self._cache_ttl_seconds)
+        return analyzed
 
     async def _collect_source(
         self,

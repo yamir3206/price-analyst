@@ -179,6 +179,94 @@ class Opportunity {
   }
 }
 
+class AiAnalysisResult {
+  const AiAnalysisResult({
+    required this.summary,
+    required this.marketAssessment,
+    required this.cheapOffers,
+    required this.expensiveOffers,
+    required this.potentialOpportunities,
+    required this.risks,
+    required this.missingInformation,
+    required this.facts,
+    required this.inferences,
+    required this.uncertainties,
+    required this.confidence,
+  });
+
+  final String summary;
+  final String marketAssessment;
+  final List<String> cheapOffers;
+  final List<String> expensiveOffers;
+  final List<String> potentialOpportunities;
+  final List<String> risks;
+  final List<String> missingInformation;
+  final List<String> facts;
+  final List<String> inferences;
+  final List<String> uncertainties;
+  final double confidence;
+
+  factory AiAnalysisResult.fromJson(Map<String, dynamic> json) {
+    return AiAnalysisResult(
+      summary: json['summary'] as String? ?? '',
+      marketAssessment: json['market_assessment'] as String? ?? '',
+      cheapOffers: _stringList(json['cheap_offers']),
+      expensiveOffers: _stringList(json['expensive_offers']),
+      potentialOpportunities: _stringList(json['potential_opportunities']),
+      risks: _stringList(json['risks']),
+      missingInformation: _stringList(json['missing_information']),
+      facts: _stringList(json['facts']),
+      inferences: _stringList(json['inferences']),
+      uncertainties: _stringList(json['uncertainties']),
+      confidence: _doubleValue(json['confidence']) ?? 0,
+    );
+  }
+}
+
+class AiAnalysisEnvelope {
+  const AiAnalysisEnvelope({
+    required this.status,
+    this.result,
+    this.datasetHash,
+    this.promptVersion,
+    this.model,
+    this.errorCode,
+    this.errorMessage,
+  });
+
+  const AiAnalysisEnvelope.notRequested()
+      : status = 'not_requested',
+        result = null,
+        datasetHash = null,
+        promptVersion = null,
+        model = null,
+        errorCode = null,
+        errorMessage = null;
+
+  final String status;
+  final AiAnalysisResult? result;
+  final String? datasetHash;
+  final String? promptVersion;
+  final String? model;
+  final String? errorCode;
+  final String? errorMessage;
+
+  factory AiAnalysisEnvelope.fromJson(Map<String, dynamic> json) {
+    final resultJson = json['result'];
+    return AiAnalysisEnvelope(
+      status: json['status'] as String? ?? 'not_requested',
+      result: resultJson is Map<String, dynamic>
+          ? AiAnalysisResult.fromJson(resultJson)
+          : null,
+      datasetHash: json['dataset_hash'] as String?,
+      promptVersion: json['prompt_version'] as String?,
+      model: json['model'] as String?,
+      errorCode: json['error_code'] as String?,
+      errorMessage: json['error_message'] as String?,
+    );
+  }
+}
+
 class SearchSnapshot {
   const SearchSnapshot({
     required this.query,
@@ -190,6 +278,7 @@ class SearchSnapshot {
     this.priceCharts = const [],
     this.opportunities = const [],
     this.stale = false,
+    this.aiAnalysis = const AiAnalysisEnvelope.notRequested(),
   });
 
   final NormalizedQuery query;
@@ -201,6 +290,7 @@ class SearchSnapshot {
   final List<PriceChart> priceCharts;
   final List<Opportunity> opportunities;
   final bool stale;
+  final AiAnalysisEnvelope aiAnalysis;
 
   factory SearchSnapshot.fromJson(Map<String, dynamic> json) {
     final sourceJson = json['source_statuses'];
@@ -211,7 +301,9 @@ class SearchSnapshot {
             .toList(growable: false)
         : const <SourceStatus>[];
     final localJson = json['local_analysis'];
-    final local = localJson is Map<String, dynamic> ? localJson : const <String, dynamic>{};
+    final local = localJson is Map<String, dynamic>
+        ? localJson
+        : const <String, dynamic>{};
     final chartJson = local['price_charts'];
     final charts = chartJson is List
         ? chartJson
@@ -227,6 +319,7 @@ class SearchSnapshot {
             .toList(growable: false)
         : const <Opportunity>[];
     final statisticsJson = json['statistics'];
+    final aiJson = json['ai_analysis'];
 
     return SearchSnapshot(
       query: NormalizedQuery.fromJson(
@@ -242,11 +335,18 @@ class SearchSnapshot {
       priceCharts: charts,
       opportunities: opportunities,
       stale: json['stale'] as bool? ?? false,
+      aiAnalysis: aiJson is Map<String, dynamic>
+          ? AiAnalysisEnvelope.fromJson(aiJson)
+          : const AiAnalysisEnvelope.notRequested(),
     );
   }
 
   int get availableSourceCount =>
       sourceStatuses.where((source) => source.adapterConfigured).length;
 }
+
+List<String> _stringList(dynamic value) => value is List
+    ? value.whereType<String>().toList(growable: false)
+    : const <String>[];
 
 double? _doubleValue(dynamic value) => value is num ? value.toDouble() : null;
