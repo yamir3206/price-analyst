@@ -6,6 +6,7 @@ from typing import Protocol
 
 from price_analyst.domain.ai_analysis import AIAnalysis, CompactAnalysisDataset
 from price_analyst.domain.snapshots import SearchSnapshot
+from price_analyst.domain.wholesale import WholesaleSnapshot
 
 
 class SnapshotCache(Protocol):
@@ -13,6 +14,14 @@ class SnapshotCache(Protocol):
         ...
 
     async def put(self, key: str, value: SearchSnapshot, ttl_seconds: int) -> None:
+        ...
+
+
+class WholesaleSnapshotCache(Protocol):
+    async def get(self, key: str) -> WholesaleSnapshot | None:
+        ...
+
+    async def put(self, key: str, value: WholesaleSnapshot, ttl_seconds: int) -> None:
         ...
 
 

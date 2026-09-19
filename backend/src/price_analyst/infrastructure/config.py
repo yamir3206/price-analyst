@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     divar_city: str = "tehran"
     divar_category: str = "electronic-devices"
 
+    wholesale_feed_enabled: bool = False
+    wholesale_feed_url: str | None = None
+    wholesale_feed_source: str = "configured_public_feed"
+    wholesale_response_max_bytes: int = Field(default=1_000_000, ge=1)
+    max_wholesale_listings: int = Field(default=100, ge=1, le=1000)
+    wholesale_concurrency: int = Field(default=2, ge=1)
+    wholesale_min_interval_seconds: float = Field(default=0.25, ge=0)
+    wholesale_timeout_seconds: float = Field(default=10.0, gt=0)
+
     model_config = SettingsConfigDict(
         env_prefix="PRICE_ANALYST_",
         env_file=".env",

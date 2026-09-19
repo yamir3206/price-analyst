@@ -16,5 +16,6 @@ The primary Phase 1 contracts are:
 - `CompactAnalysisDataset` and its bounded `CompactOffer` records
 - `AIAnalysis`, with separate facts, inferences, uncertainties, and validated offer-ID lists
 - `AIAnalysisEnvelope`, carrying `not_requested`, `disabled`, `cached`, `completed`, `invalid_response`, or `failed` status
+- `WholesaleListing`, `WholesaleSourceStatus`, and `WholesaleSnapshot`
 
 `CompactAnalysisDataset` is an AI-only projection. The full `Offer` records remain in the `SearchSnapshot` and are never replaced by the compact selection. Compact records contain no URLs or raw HTML; prices retain their explicit `IRR`, `IRT`, or `UNKNOWN` currency. Missing source fields are represented as `null`. Models reject unknown fields at important boundaries to prevent accidental propagation of raw or unreviewed data.

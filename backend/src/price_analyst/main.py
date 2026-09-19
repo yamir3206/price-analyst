@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from uuid import uuid4
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from price_analyst import __version__
 from price_analyst.ai.cache import InMemoryAIAnalysisCache
@@ -16,6 +19,7 @@ from price_analyst.ai.service import AIAnalysisService, AIClient
 from price_analyst.api.router import api_router
 from price_analyst.application.search_pipeline import SearchPipeline
 from price_analyst.application.source_health import SourceHealthTracker
+from price_analyst.application.wholesale_service import WholesaleService
 from price_analyst.cache.in_memory import InMemorySnapshotCache
 from price_analyst.collectors.rate_limit import SourceRateLimiter
 from price_analyst.collectors.registry import AdapterRegistry
@@ -23,7 +27,9 @@ from price_analyst.collectors.retry import RetryPolicy
 from price_analyst.collectors.sources.basalam import BasalamAdapter
 from price_analyst.collectors.sources.digikala import DigikalaAdapter
 from price_analyst.collectors.sources.divar import DivarAdapter
+from price_analyst.collectors.sources.public_wholesale_json import PublicWholesaleJsonAdapter
 from price_analyst.collectors.sources.torob import TorobAdapter
+from price_analyst.collectors.wholesale_registry import WholesaleAdapterRegistry
 from price_analyst.infrastructure.config import Settings
 from price_analyst.infrastructure.logging import configure_logging
 
@@ -88,10 +94,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         retry_policy=retry_policy,
                     )
                 )
+            wholesale_registry = WholesaleAdapterRegistry()
+            if app_settings.wholesale_feed_enabled and app_settings.wholesale_feed_url:
+                wholesale_registry.register(
+                    PublicWholesaleJsonAdapter(
+                        http_client,
+                        source=app_settings.wholesale_feed_source,
+                        feed_url=app_settings.wholesale_feed_url,
+                        retry_policy=retry_policy,
+                        max_response_bytes=app_settings.wholesale_response_max_bytes,
+                    )
+                )
             application.state.adapter_registry = registry
+            application.state.wholesale_adapter_registry = wholesale_registry
             application.state.snapshot_cache = InMemorySnapshotCache()
             application.state.source_health = health
             application.state.rate_limiter = rate_limiter
+            wholesale_rate_limiter = SourceRateLimiter(
+                app_settings.wholesale_min_interval_seconds,
+            )
+            application.state.wholesale_rate_limiter = wholesale_rate_limiter
+            application.state.wholesale_service = WholesaleService(
+                wholesale_registry,
+                rate_limiter=wholesale_rate_limiter,
+                cache_ttl_seconds=app_settings.snapshot_cache_ttl_seconds,
+                source_timeout_seconds=app_settings.wholesale_timeout_seconds,
+                source_concurrency=app_settings.wholesale_concurrency,
+                max_listings=app_settings.max_wholesale_listings,
+            )
             gemini_client: AIClient
             if app_settings.gemini_configured:
                 api_key = app_settings.gemini_api_key
@@ -145,6 +175,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ),
         lifespan=lifespan,
     )
+    @application.middleware("http")
+    async def security_headers(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        request_id = request.headers.get("x-request-id", "")
+        if (
+            not request_id
+            or len(request_id) > 128
+            or not request_id.isascii()
+            or not all(char.isalnum() or char in "-_.:" for char in request_id)
+        ):
+            request_id = str(uuid4())
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     application.state.settings = app_settings
     application.add_middleware(
         CORSMiddleware,

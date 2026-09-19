@@ -70,4 +70,18 @@ Gemini remains disabled when `PRICE_ANALYST_GEMINI_API_KEY` is empty. The proces
 
 ## Phase 6 — wholesale and hardening
 
-Add wholesale adapters, permitted social sources, performance work, Android packaging, security review, and integration testing.
+Phase 6A implemented:
+
+- Separate wholesale contracts, adapter protocol, registry, cache, bounded service, and API route
+- A source-neutral public HTTPS JSON-feed adapter that is enabled only for an explicitly reviewed URL
+- Minimum order quantity, unit price with explicit currency, supplier, shipping, location, public contact, and observed-time fields
+- Stale wholesale snapshot fallback without mixing wholesale listings into retail `SearchSnapshot`
+- Flutter wholesale query state and structured listing/status UI
+- API request IDs, security headers, no-store responses, private-IP feed rejection, response-size limits, and integration tests
+
+Still pending in later Phase 6 work:
+
+- Additional specifically authorized wholesale/source adapters and any permitted social-source integration
+- Performance benchmarks and broader durable-cache/persistence work
+- Android packaging and release configuration
+- Full security/threat-model review and deployment hardening

@@ -17,6 +17,13 @@ class AnalysisRequest(BaseModel):
     refresh: bool = False
 
 
+class WholesaleSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1, max_length=200)
+    refresh: bool = False
+
+
 class HealthResponse(BaseModel):
     status: str
     service: str

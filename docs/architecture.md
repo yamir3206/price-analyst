@@ -14,7 +14,7 @@ query → normalize → source search → deterministic extraction
 
 - `api/` translates HTTP requests and responses.
 - `application/` orchestrates use cases.
-- `collectors/` defines the marketplace port and owns source-specific adapters. Torob, Basalam, Digikala, and Divar each implement bounded public-HTML search and detail/listing collection in independent packages.
+- `collectors/` defines the retail marketplace port and owns source-specific adapters. Torob, Basalam, Digikala, and Divar each implement bounded public-HTML search and detail/listing collection in independent packages. Wholesale collection has a separate adapter port, registry, service, and snapshot contract; it cannot silently enter retail results.
 - `normalization/`, `matching/`, and `analysis/` contain deterministic logic. Matching reports evidence and mismatch fields; local analysis calculates per-currency statistics, classifications, chart data, and opportunity references without discarding full offers.
 - `ai/` creates bounded structured Gemini requests and validates responses.
 - `persistence/` owns SQLAlchemy models, repositories, and migrations.
@@ -28,7 +28,7 @@ The full dataset is retained for the UI and local analysis. A separate compact d
 
 ## Optional AI flow
 
-`POST /api/v1/searches` performs ordinary deterministic collection only. `POST /api/v1/searches/analysis` first obtains or reuses that deterministic snapshot and then explicitly requests the optional Gemini interpretation. The server passes the compact dataset to Gemini; the API key is held in a `SecretStr` configuration value and sent only in a server-side request header. Gemini is disabled when no key is configured.
+`POST /api/v1/searches` performs ordinary deterministic collection only. `POST /api/v1/searches/analysis` first obtains or reuses that deterministic snapshot and then explicitly requests the optional Gemini interpretation. `POST /api/v1/wholesale/searches` is a separate explicit flow with its own adapters, cache, source statuses, and snapshot; it does not alter retail matching or statistics. The server passes the compact dataset to Gemini; the API key is held in a `SecretStr` configuration value and sent only in a server-side request header. Gemini is disabled when no key is configured.
 
 Gemini output is accepted only when it is a JSON object matching the strict `AIAnalysis` contract. Offer references are checked against the compact offer IDs, and facts, inferences, and uncertainties are separate fields. Successful results are cached by prompt version, model, and dataset hash; identical concurrent requests share one in-flight task. The current cache is process-local and can be replaced by a database-backed implementation later without changing the API boundary.
 

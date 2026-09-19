@@ -10,3 +10,10 @@ Collection is bounded:
 - Raw HTML is never sent to Gemini.
 - Missing fields stay `null`; adapters must not fabricate values.
 - Terms of service, robots directives, authentication requirements, and local law must be reviewed before enabling a source.
+
+Wholesale-specific safeguards:
+
+- Wholesale sources are separate from retail adapters and must return the typed `WholesaleListing` contract.
+- The built-in feed adapter accepts only an explicitly configured public HTTPS JSON URL; it does not use browser automation, authenticated endpoints, or social-network APIs.
+- Private, loopback, link-local, and reserved literal IP addresses are rejected to reduce SSRF risk. Feed responses have a strict byte limit and unknown listing fields are rejected.
+- No social or messaging source is enabled by default. A future source requires explicit permission and a dedicated adapter review before implementation.

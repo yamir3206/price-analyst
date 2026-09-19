@@ -19,4 +19,4 @@ Native runner directories can be generated with:
 flutter create . --platforms=android,windows,web
 ```
 
-The application code deliberately keeps API and state logic outside widgets. Search responses now drive the local statistics, per-currency price bars, and deterministic opportunity views; the Gemini screen remains a Phase 5 placeholder.
+The application code deliberately keeps API and state logic outside widgets. Search responses drive the local statistics, per-currency price bars, deterministic opportunity views, and the explicit Gemini interpretation flow. Wholesale search uses a separate controller and endpoint so supplier listings never get mixed into retail snapshots. Native Android packaging and release signing remain later Phase 6 work.

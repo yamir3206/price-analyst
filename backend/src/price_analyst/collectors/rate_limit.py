@@ -6,8 +6,6 @@ import asyncio
 import time
 from collections import defaultdict
 
-from price_analyst.domain.enums import Marketplace
-
 
 class SourceRateLimiter:
     """Ensure a minimum interval between requests to each source."""
@@ -16,10 +14,10 @@ class SourceRateLimiter:
         if minimum_interval_seconds < 0:
             raise ValueError("minimum_interval_seconds must not be negative")
         self._interval = minimum_interval_seconds
-        self._next_allowed: dict[Marketplace, float] = defaultdict(float)
-        self._locks: dict[Marketplace, asyncio.Lock] = defaultdict(asyncio.Lock)
+        self._next_allowed: dict[str, float] = defaultdict(float)
+        self._locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
-    async def acquire(self, source: Marketplace) -> None:
+    async def acquire(self, source: str) -> None:
         if self._interval == 0:
             return
         async with self._locks[source]:

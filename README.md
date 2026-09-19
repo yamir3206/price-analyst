@@ -4,7 +4,7 @@ Price Analyst is a cross-platform price-intelligence application for Android, Wi
 
 ## Repository status
 
-Phases 1–5 are implemented. The repository currently contains:
+Phases 1–5 and Phase 6A are implemented. The repository currently contains:
 
 - A typed FastAPI backend foundation
 - Domain models for queries, offers, source health, snapshots, opportunities, and AI analysis
@@ -15,6 +15,8 @@ Phases 1–5 are implemented. The repository currently contains:
 - Partial-result responses with stale cached offers during refresh failures
 - Deterministic local matching, per-currency statistics, classifications, chart data, and opportunity references
 - Optional server-side Gemini interpretation with bounded input, strict output validation, cache, coalescing, and an explicit analysis endpoint
+- Separate wholesale contracts, bounded public HTTPS JSON-feed adapter, API flow, and Flutter UI
+- Baseline API security headers, request IDs, response-size/URL safeguards, and integration tests
 - SQLite/PostgreSQL-compatible persistence scaffolding
 - A Flutter application shell with RTL support and local statistics, chart, and opportunity views
 - Backend tests and frontend test scaffolding

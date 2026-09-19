@@ -74,3 +74,23 @@ def test_analysis_is_explicit_and_disabled_without_a_server_key() -> None:
     assert analyzed.status_code == 200
     assert analyzed.json()["ai_analysis"]["status"] == "disabled"
     assert analyzed.json()["offers"] == []
+
+
+def test_wholesale_endpoint_is_explicit_and_truthful_without_a_feed() -> None:
+    app = create_app(Settings(environment="test", cors_origins=["*"]))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/wholesale/searches",
+            json={"query": "laptop"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["collection_status"] == "no_sources_configured"
+    assert body["listings"] == []
+    assert body["source_statuses"] == []
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-request-id"]
