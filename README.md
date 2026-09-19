@@ -4,17 +4,20 @@ Price Analyst is a cross-platform price-intelligence application for Android, Wi
 
 ## Repository status
 
-Phase 1 foundation is implemented. The repository currently contains:
+Phases 1 and 2 are implemented. The repository currently contains:
 
 - A typed FastAPI backend foundation
 - Domain models for queries, offers, source health, snapshots, opportunities, and AI analysis
 - Adapter and service boundaries for deterministic marketplace collection
 - A deterministic Persian/English query normalizer
+- A deterministic Torob adapter using public search/product HTML surfaces
+- JSON-LD-first parsing with bounded DOM fallback and fixture tests
+- Two-stage search/detail collection with candidate ranking and cache support
 - SQLite/PostgreSQL-compatible persistence scaffolding
 - A Flutter application shell with RTL support and placeholder feature screens
 - Backend tests and frontend test scaffolding
 
-Live marketplace adapters are intentionally not implemented in Phase 1.
+Basalam, Digikala, and Divar adapters remain scheduled for Phase 3.
 
 ## Architecture
 

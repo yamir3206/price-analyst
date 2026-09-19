@@ -5,7 +5,9 @@ from price_analyst.main import create_app
 
 
 def test_health_endpoint_reports_configuration() -> None:
-    app = create_app(Settings(environment="test", cors_origins=["*"]))
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
 
     with TestClient(app) as client:
         response = client.get("/api/v1/health")
@@ -18,7 +20,9 @@ def test_health_endpoint_reports_configuration() -> None:
 
 
 def test_search_endpoint_returns_truthful_phase_one_snapshot() -> None:
-    app = create_app(Settings(environment="test", cors_origins=["*"]))
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
 
     with TestClient(app) as client:
         response = client.post(
@@ -41,7 +45,9 @@ def test_search_endpoint_returns_truthful_phase_one_snapshot() -> None:
 
 
 def test_search_request_rejects_unknown_fields() -> None:
-    app = create_app(Settings(environment="test", cors_origins=["*"]))
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
 
     with TestClient(app) as client:
         response = client.post(

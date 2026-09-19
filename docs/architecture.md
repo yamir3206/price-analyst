@@ -14,7 +14,7 @@ query → normalize → source search → deterministic extraction
 
 - `api/` translates HTTP requests and responses.
 - `application/` orchestrates use cases.
-- `collectors/` defines the marketplace port and owns source-specific adapters.
+- `collectors/` defines the marketplace port and owns source-specific adapters. The Torob adapter currently implements bounded search and product-page collection.
 - `normalization/`, `matching/`, and `analysis/` contain deterministic logic.
 - `ai/` creates bounded structured Gemini requests and validates responses.
 - `persistence/` owns SQLAlchemy models, repositories, and migrations.

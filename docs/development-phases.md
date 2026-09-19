@@ -2,7 +2,7 @@
 
 ## Phase 1 — foundation
 
-Implemented in this change:
+Implemented:
 
 - FastAPI application and typed domain contracts
 - Adapter registry and application pipeline boundary
@@ -11,11 +11,21 @@ Implemented in this change:
 - Flutter shell and feature navigation
 - API, model, normalization, and compact dataset tests
 
-Live marketplace adapters are intentionally not part of Phase 1.
-
 ## Phase 2 — one deterministic source
 
-Implement one permitted marketplace adapter with fixture-driven parsing, search/detail staging, cache behavior, and parser tests.
+Implemented for Torob:
+
+- Public search and product-page adapter
+- JSON-LD-first extraction with deterministic DOM fallback
+- Persian digit/currency/availability/condition parsing
+- Search candidate and seller-offer mapping
+- Bounded detail-page collection
+- Deterministic candidate ranking
+- In-memory snapshot cache and refresh bypass
+- Fixture-driven parser and adapter tests
+
+The adapter is disabled by default and must be explicitly enabled through configuration.
+
 
 ## Phase 3 — remaining marketplaces
 

@@ -40,5 +40,5 @@ class MarketplaceAdapter(Protocol):
         self,
         candidate: SearchCandidate,
         context: SearchContext,
-    ) -> Offer | None:
-        """Fetch and map details for one already-selected candidate."""
+    ) -> list[Offer]:
+        """Fetch all normalized offers for one selected product candidate."""

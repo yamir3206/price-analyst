@@ -15,7 +15,7 @@ class FakeAdapter:
 
     async def fetch_details(self, candidate, context):
         del candidate, context
-        return None
+        return []
 
 
 def test_registry_keeps_adapters_replaceable() -> None:

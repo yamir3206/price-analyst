@@ -24,7 +24,12 @@ class Settings(BaseSettings):
 
     source_timeout_seconds: float = Field(default=10.0, gt=0)
     max_search_candidates: int = Field(default=100, ge=1)
+    max_detail_candidates: int = Field(default=8, ge=1)
+    source_concurrency: int = Field(default=2, ge=1)
     snapshot_cache_ttl_seconds: int = Field(default=300, ge=0)
+
+    torob_enabled: bool = False
+    torob_base_url: str = "https://torob.com"
 
     model_config = SettingsConfigDict(
         env_prefix="PRICE_ANALYST_",
