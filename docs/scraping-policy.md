@@ -1,6 +1,6 @@
 # Collection policy
 
-Marketplace adapters must use permitted/public access methods and should prefer official APIs or structured public endpoints. The Phase 2 Torob adapter uses public search/product HTML, JSON-LD, and bounded DOM parsing; it does not use authenticated endpoints or browser automation. Source-specific code must be isolated under its adapter directory.
+Marketplace adapters must use permitted/public access methods and should prefer official APIs or structured public endpoints. The Phase 3 Torob, Basalam, Digikala, and Divar adapters use public search/product or listing HTML, JSON-LD, structured data, and bounded DOM parsing; they do not use authenticated endpoints, undocumented APIs, or browser automation. Source-specific code must be isolated under its adapter directory.
 
 Collection is bounded:
 

@@ -29,7 +29,15 @@ The adapter is disabled by default and must be explicitly enabled through config
 
 ## Phase 3 — remaining marketplaces
 
-Add Torob, Basalam, Digikala, and Divar adapters, source health, rate limits, retries, partial failure handling, and incremental refresh.
+Implemented:
+
+- Independent public-HTML adapters for Basalam, Digikala, and Divar
+- Shared bounded retries with exponential backoff and per-source request pacing
+- In-memory source health tracking and temporary circuit breaking
+- Partial result responses and stale cached-offer fallback during refresh
+- Fixture-driven parser, adapter, retry, health, and refresh tests
+
+All marketplace adapters remain disabled by default and must be explicitly enabled through configuration.
 
 ## Phase 4 — local analysis
 

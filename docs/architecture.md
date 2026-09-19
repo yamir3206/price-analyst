@@ -14,7 +14,7 @@ query → normalize → source search → deterministic extraction
 
 - `api/` translates HTTP requests and responses.
 - `application/` orchestrates use cases.
-- `collectors/` defines the marketplace port and owns source-specific adapters. The Torob adapter currently implements bounded search and product-page collection.
+- `collectors/` defines the marketplace port and owns source-specific adapters. Torob, Basalam, Digikala, and Divar each implement bounded public-HTML search and detail/listing collection in independent packages.
 - `normalization/`, `matching/`, and `analysis/` contain deterministic logic.
 - `ai/` creates bounded structured Gemini requests and validates responses.
 - `persistence/` owns SQLAlchemy models, repositories, and migrations.
@@ -28,4 +28,4 @@ The full dataset is retained for the UI and local analysis. A separate compact d
 
 ## Failure behavior
 
-Source failures are represented per source and never abort a search for other sources. Gemini failures return deterministic data with an explicit AI status.
+Source failures are represented per source and never abort a search for other sources. Requests use bounded exponential retries and a per-source minimum interval. Consecutive failures temporarily disable a source through an in-memory circuit breaker. On refresh, the pipeline reuses the last cached offers for a failed or disabled source and marks that source and snapshot as stale. Gemini failures return deterministic data with an explicit AI status.

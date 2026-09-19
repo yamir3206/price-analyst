@@ -26,10 +26,24 @@ class Settings(BaseSettings):
     max_search_candidates: int = Field(default=100, ge=1)
     max_detail_candidates: int = Field(default=8, ge=1)
     source_concurrency: int = Field(default=2, ge=1)
+    source_min_interval_seconds: float = Field(default=0.25, ge=0)
+    source_failure_threshold: int = Field(default=3, ge=1)
+    source_cooldown_seconds: float = Field(default=300.0, ge=0)
+    retry_max_attempts: int = Field(default=3, ge=1, le=5)
+    retry_base_delay_seconds: float = Field(default=0.25, ge=0)
+    retry_max_delay_seconds: float = Field(default=2.0, ge=0)
     snapshot_cache_ttl_seconds: int = Field(default=300, ge=0)
 
     torob_enabled: bool = False
     torob_base_url: str = "https://torob.com"
+    basalam_enabled: bool = False
+    basalam_base_url: str = "https://basalam.com"
+    digikala_enabled: bool = False
+    digikala_base_url: str = "https://www.digikala.com"
+    divar_enabled: bool = False
+    divar_base_url: str = "https://divar.ir"
+    divar_city: str = "tehran"
+    divar_category: str = "electronic-devices"
 
     model_config = SettingsConfigDict(
         env_prefix="PRICE_ANALYST_",

@@ -1,4 +1,4 @@
-"""Deterministic search orchestration with bounded source/detail collection."""
+"""Deterministic search orchestration with bounded, refreshable source collection."""
 
 from __future__ import annotations
 
@@ -13,7 +13,10 @@ from uuid import uuid4
 import httpx
 
 from price_analyst.application.ports import SnapshotCache
+from price_analyst.application.source_health import SourceHealthTracker
+from price_analyst.cache.in_memory import InMemorySnapshotCache
 from price_analyst.collectors.interfaces import MarketplaceAdapter, SearchContext
+from price_analyst.collectors.rate_limit import SourceRateLimiter
 from price_analyst.collectors.registry import AdapterRegistry
 from price_analyst.collectors.relevance import rank_candidates
 from price_analyst.domain.enums import CollectionStatus, Marketplace, SourceState
@@ -37,6 +40,7 @@ class _SourceCollection:
     offers: list[Offer]
     status: SourceStatus
     search_succeeded: bool
+    partial_failure: bool = False
 
 
 class SearchPipeline:
@@ -47,6 +51,8 @@ class SearchPipeline:
         registry: AdapterRegistry,
         *,
         cache: SnapshotCache | None = None,
+        health: SourceHealthTracker | None = None,
+        rate_limiter: SourceRateLimiter | None = None,
         cache_ttl_seconds: int = 300,
         source_timeout_seconds: float = 10.0,
         max_search_candidates: int = 100,
@@ -54,7 +60,9 @@ class SearchPipeline:
         source_concurrency: int = 2,
     ) -> None:
         self._registry = registry
-        self._cache = cache
+        self._cache = cache if cache is not None else InMemorySnapshotCache()
+        self._health = health if health is not None else SourceHealthTracker()
+        self._rate_limiter = rate_limiter if rate_limiter is not None else SourceRateLimiter(0.0)
         self._cache_ttl_seconds = cache_ttl_seconds
         self._source_timeout_seconds = source_timeout_seconds
         self._max_search_candidates = max_search_candidates
@@ -64,10 +72,9 @@ class SearchPipeline:
     async def run(self, query_text: str, *, refresh: bool = False) -> SearchSnapshot:
         query = normalize_query(query_text)
         cache_key = self._cache_key(query)
-        if self._cache is not None and not refresh:
-            cached = await self._cache.get(cache_key)
-            if cached is not None:
-                return cached
+        previous = await self._cache.get(cache_key)
+        if previous is not None and not refresh:
+            return previous
 
         search_id = uuid4()
         request_id = str(search_id)
@@ -78,16 +85,8 @@ class SearchPipeline:
             if self._registry.get(source) is not None
         ]
         if not configured:
-            snapshot = SearchSnapshot(
-                search_id=search_id,
-                query=query,
-                source_statuses=[
-                    self._not_configured_status(source) for source in _INITIAL_MARKETPLACES
-                ],
-                collection_status=CollectionStatus.NO_SOURCES_CONFIGURED,
-                collected_at=now,
-            )
-            await self._cache_snapshot(cache_key, snapshot)
+            snapshot = self._snapshot_without_adapters(search_id, query, now, previous)
+            await self._cache.put(cache_key, snapshot, self._cache_ttl_seconds)
             return snapshot
 
         source_gate = asyncio.Semaphore(self._source_concurrency)
@@ -109,16 +108,42 @@ class SearchPipeline:
         results = await asyncio.gather(
             *(collect_one(source, adapter) for source, adapter in configured)
         )
-        successful = [result for result in results if result.search_succeeded]
-        all_offers = self._deduplicate_offers(
-            [offer for result in results for offer in result.offers]
-        )
-        statuses = self._merge_statuses(results)
-        successful_count = len(successful)
-        has_detail_failures = any(result.status.last_failure is not None for result in successful)
-        if successful_count == len(configured) and not has_detail_failures:
+        all_offers: list[Offer] = []
+        statuses: dict[Marketplace, SourceStatus] = {}
+        fresh_success_count = 0
+        stale_source_count = 0
+        has_partial_failure = False
+        for result in results:
+            statuses[result.source] = result.status
+            has_partial_failure = has_partial_failure or result.partial_failure
+            if result.search_succeeded:
+                fresh_success_count += 1
+                all_offers.extend(result.offers)
+                continue
+            old_offers = self._offers_for_source(previous, result.source)
+            if old_offers:
+                stale_source_count += 1
+                all_offers.extend(old_offers)
+                statuses[result.source] = self._stale_status(result.status, previous)
+
+        for source in self._source_order():
+            if source in statuses:
+                continue
+            old_offers = self._offers_for_source(previous, source)
+            status = self._not_configured_status(source)
+            if old_offers:
+                stale_source_count += 1
+                all_offers.extend(old_offers)
+                status = self._stale_status(status, previous)
+            statuses[source] = status
+
+        if (
+            fresh_success_count == len(configured)
+            and stale_source_count == 0
+            and not has_partial_failure
+        ):
             collection_status = CollectionStatus.COMPLETE
-        elif successful_count > 0:
+        elif fresh_success_count > 0 or stale_source_count > 0:
             collection_status = CollectionStatus.PARTIAL
         else:
             collection_status = CollectionStatus.FAILED
@@ -126,13 +151,14 @@ class SearchPipeline:
         snapshot = SearchSnapshot(
             search_id=search_id,
             query=query,
-            offers=all_offers,
-            source_statuses=statuses,
+            offers=self._deduplicate_offers(all_offers),
+            source_statuses=[statuses[source] for source in self._source_order()],
             collection_status=collection_status,
             collected_at=now,
+            stale=stale_source_count > 0,
         )
-        if successful_count > 0:
-            await self._cache_snapshot(cache_key, snapshot)
+        if fresh_success_count > 0 or stale_source_count > 0:
+            await self._cache.put(cache_key, snapshot, self._cache_ttl_seconds)
         return snapshot
 
     async def _collect_source(
@@ -141,6 +167,15 @@ class SearchPipeline:
         query: NormalizedQuery,
         request_id: str,
     ) -> _SourceCollection:
+        if not await self._health.can_request(adapter.source):
+            status = await self._health.status(adapter.source, state=SourceState.RATE_LIMITED)
+            return _SourceCollection(
+                source=adapter.source,
+                offers=[],
+                status=status,
+                search_succeeded=False,
+            )
+
         started = perf_counter()
         now = datetime.now(UTC)
         context = SearchContext(
@@ -149,24 +184,24 @@ class SearchPipeline:
             max_candidates=self._max_search_candidates,
         )
         try:
+            await self._rate_limiter.acquire(adapter.source)
             raw_candidates = await asyncio.wait_for(
                 adapter.search(query, context),
                 timeout=self._source_timeout_seconds,
             )
         except Exception as exc:  # source failures must be isolated
+            elapsed = self._elapsed_ms(started)
+            await self._health.record_failure(
+                adapter.source,
+                error_code=self._error_code(exc),
+                error_message="The source search request failed.",
+                response_time_ms=elapsed,
+            )
+            status = await self._health.status(adapter.source, state=SourceState.UNAVAILABLE)
             return _SourceCollection(
                 source=adapter.source,
                 offers=[],
-                status=SourceStatus(
-                    source=adapter.source,
-                    state=SourceState.UNAVAILABLE,
-                    adapter_configured=True,
-                    last_failure=now,
-                    failure_count=1,
-                    average_response_time_ms=self._elapsed_ms(started),
-                    error_code=self._error_code(exc),
-                    error_message="The source search request failed.",
-                ),
+                status=status,
                 search_succeeded=False,
             )
 
@@ -193,31 +228,28 @@ class SearchPipeline:
             else:
                 offers.extend(details)
 
-        error_message = None
-        error_code = None
-        last_failure = None
+        elapsed = self._elapsed_ms(started)
         if detail_failures:
-            last_failure = now
-            error_code = "detail_fetch_failed"
-            error_message = f"{detail_failures} selected product detail request(s) failed."
-        status = SourceStatus(
-            source=adapter.source,
+            await self._health.record_failure(
+                adapter.source,
+                error_code="detail_fetch_failed",
+                error_message=f"{detail_failures} selected detail request(s) failed.",
+                response_time_ms=elapsed,
+            )
+        else:
+            await self._health.record_success(adapter.source, elapsed)
+        status = await self._health.status(
+            adapter.source,
             state=SourceState.READY,
-            adapter_configured=True,
-            last_success=now,
-            last_failure=last_failure,
-            average_response_time_ms=self._elapsed_ms(started),
             candidate_count=len(candidates),
             offer_count=len(offers),
-            failure_count=detail_failures,
-            error_code=error_code,
-            error_message=error_message,
         )
         return _SourceCollection(
             source=adapter.source,
             offers=offers,
             status=status,
             search_succeeded=True,
+            partial_failure=detail_failures > 0,
         )
 
     async def _fetch_details(
@@ -227,6 +259,7 @@ class SearchPipeline:
         context: SearchContext,
     ) -> tuple[SearchCandidate, list[Offer], Exception | None]:
         try:
+            await self._rate_limiter.acquire(adapter.source)
             details = await asyncio.wait_for(
                 adapter.fetch_details(candidate, context),
                 timeout=self._source_timeout_seconds,
@@ -234,6 +267,58 @@ class SearchPipeline:
             return candidate, details, None
         except Exception as exc:  # one product page must not fail the source
             return candidate, [], exc
+
+    def _snapshot_without_adapters(
+        self,
+        search_id,
+        query: NormalizedQuery,
+        now: datetime,
+        previous: SearchSnapshot | None,
+    ) -> SearchSnapshot:
+        offers: list[Offer] = []
+        statuses: list[SourceStatus] = []
+        stale = False
+        for source in _INITIAL_MARKETPLACES:
+            old_offers = self._offers_for_source(previous, source)
+            status = self._not_configured_status(source)
+            if old_offers:
+                stale = True
+                offers.extend(old_offers)
+                status = self._stale_status(status, previous)
+            statuses.append(status)
+        return SearchSnapshot(
+            search_id=search_id,
+            query=query,
+            offers=self._deduplicate_offers(offers),
+            source_statuses=statuses,
+            collection_status=CollectionStatus.NO_SOURCES_CONFIGURED,
+            collected_at=now,
+            stale=stale,
+        )
+
+    @staticmethod
+    def _offers_for_source(
+        snapshot: SearchSnapshot | None,
+        source: Marketplace,
+    ) -> list[Offer]:
+        if snapshot is None:
+            return []
+        return [offer for offer in snapshot.offers if offer.source is source]
+
+    @staticmethod
+    def _stale_status(status: SourceStatus, previous: SearchSnapshot | None) -> SourceStatus:
+        timestamp = previous.collected_at if previous else None
+        old_offers = SearchPipeline._offers_for_source(previous, status.source)
+        return status.model_copy(
+            update={
+                "state": SourceState.STALE,
+                "offer_count": len(old_offers),
+                "stale_data_available": True,
+                "stale_data_timestamp": timestamp,
+                "error_message": status.error_message
+                or "Using the most recent cached data for this source.",
+            }
+        )
 
     def _candidate_to_offer(self, candidate: SearchCandidate, observed_at: datetime) -> Offer:
         metadata = dict(candidate.metadata)
@@ -260,13 +345,6 @@ class SearchPipeline:
     def _source_order(self) -> tuple[Marketplace, ...]:
         registered = self._registry.sources()
         return tuple(dict.fromkeys((*_INITIAL_MARKETPLACES, *registered)))
-
-    def _merge_statuses(self, results: list[_SourceCollection]) -> list[SourceStatus]:
-        statuses = {result.source: result.status for result in results}
-        return [
-            statuses.get(source, self._not_configured_status(source))
-            for source in self._source_order()
-        ]
 
     @staticmethod
     def _deduplicate_candidates(candidates: list[SearchCandidate]) -> list[SearchCandidate]:
@@ -300,10 +378,6 @@ class SearchPipeline:
             error_code="adapter_not_configured",
             error_message="This marketplace adapter is not enabled yet.",
         )
-
-    async def _cache_snapshot(self, key: str, snapshot: SearchSnapshot) -> None:
-        if self._cache is not None:
-            await self._cache.put(key, snapshot, self._cache_ttl_seconds)
 
     @staticmethod
     def _cache_key(query: NormalizedQuery) -> str:

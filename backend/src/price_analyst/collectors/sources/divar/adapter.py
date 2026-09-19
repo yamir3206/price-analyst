@@ -1,4 +1,4 @@
-"""Async Torob adapter using only public HTML surfaces."""
+"""Async Divar adapter for a configured city/category public search."""
 
 from __future__ import annotations
 
@@ -10,28 +10,30 @@ import httpx
 from price_analyst.collectors.http import get_with_retry
 from price_analyst.collectors.interfaces import SearchContext
 from price_analyst.collectors.retry import RetryPolicy
-from price_analyst.collectors.sources.torob.parser import TorobParser
+from price_analyst.collectors.sources.divar.parser import DivarParser
 from price_analyst.domain.enums import Marketplace
 from price_analyst.domain.offers import Offer, SearchCandidate
 from price_analyst.domain.queries import NormalizedQuery
 
 
-class TorobAdapter:
-    """Collect Torob search candidates and selected product-page offers."""
-
-    source = Marketplace.TOROB
+class DivarAdapter:
+    source = Marketplace.DIVAR
 
     def __init__(
         self,
         client: httpx.AsyncClient,
         *,
-        base_url: str = "https://torob.com",
-        parser: TorobParser | None = None,
+        base_url: str = "https://divar.ir",
+        city: str = "tehran",
+        category: str = "electronic-devices",
+        parser: DivarParser | None = None,
         retry_policy: RetryPolicy | None = None,
     ) -> None:
         self._client = client
         self._base_url = base_url.rstrip("/")
-        self._parser = parser or TorobParser(base_url=self._base_url)
+        self._city = city.strip("/")
+        self._category = category.strip("/")
+        self._parser = parser or DivarParser(base_url=self._base_url)
         self._retry_policy = retry_policy or RetryPolicy()
 
     async def search(
@@ -41,8 +43,8 @@ class TorobAdapter:
     ) -> list[SearchCandidate]:
         response = await get_with_retry(
             self._client,
-            f"{self._base_url}/search/",
-            params={"query": query.normalized_text},
+            f"{self._base_url}/s/{self._city}/{self._category}",
+            params={"q": query.normalized_text},
             timeout=context.timeout_seconds,
             policy=self._retry_policy,
         )
@@ -56,11 +58,8 @@ class TorobAdapter:
         candidate: SearchCandidate,
         context: SearchContext,
     ) -> list[Offer]:
-        candidate_host = urlsplit(candidate.url).netloc.lower()
-        base_host = urlsplit(self._base_url).netloc.lower()
-        if candidate_host and candidate_host != base_host:
-            raise ValueError("refusing to fetch a product URL outside the configured Torob host")
-
+        if urlsplit(candidate.url).netloc.lower() != urlsplit(self._base_url).netloc.lower():
+            raise ValueError("refusing to fetch a listing URL outside the configured Divar host")
         response = await get_with_retry(
             self._client,
             candidate.url,
