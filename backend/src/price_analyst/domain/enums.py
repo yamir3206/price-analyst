@@ -54,6 +54,17 @@ class CollectionStatus(StrEnum):
     FAILED = "failed"
 
 
+class PriceClassification(StrEnum):
+    """Relative deterministic price labels; not investment advice."""
+
+    BELOW_MARKET = "below_market"
+    TYPICAL = "typical"
+    ABOVE_MARKET = "above_market"
+    LOW_OUTLIER = "low_outlier"
+    HIGH_OUTLIER = "high_outlier"
+    UNKNOWN = "unknown"
+
+
 class AIAnalysisStatus(StrEnum):
     NOT_REQUESTED = "not_requested"
     DISABLED = "disabled"

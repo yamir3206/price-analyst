@@ -80,6 +80,10 @@ async def test_pipeline_fetches_details_for_only_top_candidates_and_caches_snaps
 
     assert first.collection_status.value == "complete"
     assert len(first.offers) == 2
+    assert first.statistics is not None
+    assert first.statistics.count == 1
+    assert first.statistics.median == 100
+    assert any(match.is_match for match in first.local_analysis.matches)
     assert any(offer.details_fetched for offer in first.offers)
     assert adapter.search_calls == 1
     assert adapter.detail_calls == 1

@@ -35,6 +35,8 @@ def test_search_endpoint_returns_truthful_phase_one_snapshot() -> None:
     assert body["query"]["brand"] == "samsung"
     assert body["query"]["capacity"] == "256GB"
     assert body["offers"] == []
+    assert body["statistics"] is None
+    assert body["local_analysis"]["matches"] == []
     assert body["collection_status"] == "no_sources_configured"
     assert {status["source"] for status in body["source_statuses"]} == {
         "torob",

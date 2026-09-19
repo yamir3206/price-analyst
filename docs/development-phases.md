@@ -41,7 +41,17 @@ All marketplace adapters remain disabled by default and must be explicitly enabl
 
 ## Phase 4 — local analysis
 
-Implement matching, deduplication, price statistics, classifications, charts, and opportunity calculations.
+Implemented:
+
+- Deterministic query-to-offer matching with explicit evidence and mismatch reporting
+- Exact-repeat removal plus cross-marketplace product-equivalence groups without deleting full offers
+- Per-currency percentile, mean, spread, standard deviation, and variation statistics
+- Below-market, typical, above-market, and outlier classifications
+- Per-currency chart points with median and quartile reference lines
+- Conservative opportunity calculations using market median as an explicit resale-reference assumption
+- Snapshot/API integration with configurable match threshold and opportunity limit
+
+Currencies are never silently converted. Unknown-currency prices are retained in the full offer set but excluded from comparable statistics by default.
 
 ## Phase 5 — AI layer
 

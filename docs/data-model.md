@@ -9,6 +9,8 @@ The primary Phase 1 contracts are:
 - `Offer`
 - `SourceStatus`
 - `PriceStatistics`
+- `OfferMatch`, `DeduplicationGroup`, `OfferClassification`, and `LocalAnalysis`
+- `PriceChart` and `PriceChartPoint`
 - `SearchSnapshot`
 - `OpportunityInputs` and `OpportunityResult`
 - `CompactAnalysisDataset`

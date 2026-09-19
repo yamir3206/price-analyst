@@ -15,7 +15,7 @@ query → normalize → source search → deterministic extraction
 - `api/` translates HTTP requests and responses.
 - `application/` orchestrates use cases.
 - `collectors/` defines the marketplace port and owns source-specific adapters. Torob, Basalam, Digikala, and Divar each implement bounded public-HTML search and detail/listing collection in independent packages.
-- `normalization/`, `matching/`, and `analysis/` contain deterministic logic.
+- `normalization/`, `matching/`, and `analysis/` contain deterministic logic. Matching reports evidence and mismatch fields; local analysis calculates per-currency statistics, classifications, chart data, and opportunity references without discarding full offers.
 - `ai/` creates bounded structured Gemini requests and validates responses.
 - `persistence/` owns SQLAlchemy models, repositories, and migrations.
 - `frontend/` contains presentation and client state only.

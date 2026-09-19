@@ -8,10 +8,11 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from time import perf_counter
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 
+from price_analyst.analysis.service import analyze_offers
 from price_analyst.application.ports import SnapshotCache
 from price_analyst.application.source_health import SourceHealthTracker
 from price_analyst.cache.in_memory import InMemorySnapshotCache
@@ -58,7 +59,11 @@ class SearchPipeline:
         max_search_candidates: int = 100,
         max_detail_candidates: int = 8,
         source_concurrency: int = 2,
+        analysis_match_threshold: float = 0.55,
+        analysis_max_opportunities: int = 20,
     ) -> None:
+        if not 0 <= analysis_match_threshold <= 1:
+            raise ValueError("analysis_match_threshold must be between zero and one")
         self._registry = registry
         self._cache = cache if cache is not None else InMemorySnapshotCache()
         self._health = health if health is not None else SourceHealthTracker()
@@ -68,6 +73,8 @@ class SearchPipeline:
         self._max_search_candidates = max_search_candidates
         self._max_detail_candidates = max_detail_candidates
         self._source_concurrency = max(1, source_concurrency)
+        self._analysis_match_threshold = analysis_match_threshold
+        self._analysis_max_opportunities = max(0, analysis_max_opportunities)
 
     async def run(self, query_text: str, *, refresh: bool = False) -> SearchSnapshot:
         query = normalize_query(query_text)
@@ -148,10 +155,19 @@ class SearchPipeline:
         else:
             collection_status = CollectionStatus.FAILED
 
+        snapshot_offers = self._deduplicate_offers(all_offers)
+        local_analysis = analyze_offers(
+            query,
+            snapshot_offers,
+            match_threshold=self._analysis_match_threshold,
+            max_opportunities=self._analysis_max_opportunities,
+        )
         snapshot = SearchSnapshot(
             search_id=search_id,
             query=query,
-            offers=self._deduplicate_offers(all_offers),
+            offers=snapshot_offers,
+            statistics=local_analysis.primary_statistics,
+            local_analysis=local_analysis.analysis,
             source_statuses=[statuses[source] for source in self._source_order()],
             collection_status=collection_status,
             collected_at=now,
@@ -270,7 +286,7 @@ class SearchPipeline:
 
     def _snapshot_without_adapters(
         self,
-        search_id,
+        search_id: UUID,
         query: NormalizedQuery,
         now: datetime,
         previous: SearchSnapshot | None,
@@ -286,10 +302,19 @@ class SearchPipeline:
                 offers.extend(old_offers)
                 status = self._stale_status(status, previous)
             statuses.append(status)
+        snapshot_offers = self._deduplicate_offers(offers)
+        local_analysis = analyze_offers(
+            query,
+            snapshot_offers,
+            match_threshold=self._analysis_match_threshold,
+            max_opportunities=self._analysis_max_opportunities,
+        )
         return SearchSnapshot(
             search_id=search_id,
             query=query,
-            offers=self._deduplicate_offers(offers),
+            offers=snapshot_offers,
+            statistics=local_analysis.primary_statistics,
+            local_analysis=local_analysis.analysis,
             source_statuses=statuses,
             collection_status=CollectionStatus.NO_SOURCES_CONFIGURED,
             collected_at=now,

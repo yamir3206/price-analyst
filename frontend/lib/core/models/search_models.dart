@@ -50,6 +50,135 @@ class SourceStatus {
   }
 }
 
+class PriceStatistics {
+  const PriceStatistics({
+    required this.count,
+    this.currency,
+    this.minimum,
+    this.p25,
+    this.median,
+    this.p75,
+    this.maximum,
+    this.mean,
+    this.standardDeviation,
+  });
+
+  final int count;
+  final String? currency;
+  final double? minimum;
+  final double? p25;
+  final double? median;
+  final double? p75;
+  final double? maximum;
+  final double? mean;
+  final double? standardDeviation;
+
+  factory PriceStatistics.fromJson(Map<String, dynamic> json) {
+    return PriceStatistics(
+      count: json['count'] as int? ?? 0,
+      currency: json['currency'] as String?,
+      minimum: _doubleValue(json['minimum']),
+      p25: _doubleValue(json['p25']),
+      median: _doubleValue(json['median']),
+      p75: _doubleValue(json['p75']),
+      maximum: _doubleValue(json['maximum']),
+      mean: _doubleValue(json['mean']),
+      standardDeviation: _doubleValue(json['standard_deviation']),
+    );
+  }
+}
+
+class PriceChartPoint {
+  const PriceChartPoint({
+    required this.offerId,
+    required this.source,
+    required this.label,
+    required this.amount,
+    required this.classification,
+  });
+
+  final String offerId;
+  final String source;
+  final String label;
+  final int amount;
+  final String classification;
+
+  factory PriceChartPoint.fromJson(Map<String, dynamic> json) {
+    return PriceChartPoint(
+      offerId: json['offer_id'] as String? ?? '',
+      source: json['source'] as String? ?? 'unknown',
+      label: json['label'] as String? ?? 'unknown',
+      amount: json['amount'] as int? ?? 0,
+      classification: json['classification'] as String? ?? 'unknown',
+    );
+  }
+}
+
+class PriceChart {
+  const PriceChart({
+    required this.currency,
+    required this.points,
+    this.p25,
+    this.median,
+    this.p75,
+  });
+
+  final String currency;
+  final List<PriceChartPoint> points;
+  final double? p25;
+  final double? median;
+  final double? p75;
+
+  factory PriceChart.fromJson(Map<String, dynamic> json) {
+    final pointJson = json['points'];
+    final points = pointJson is List
+        ? pointJson
+            .whereType<Map<String, dynamic>>()
+            .map(PriceChartPoint.fromJson)
+            .toList(growable: false)
+        : const <PriceChartPoint>[];
+    return PriceChart(
+      currency: json['currency'] as String? ?? 'UNKNOWN',
+      points: points,
+      p25: _doubleValue(json['p25']),
+      median: _doubleValue(json['median']),
+      p75: _doubleValue(json['p75']),
+    );
+  }
+}
+
+class Opportunity {
+  const Opportunity({
+    required this.offerId,
+    required this.currency,
+    required this.totalCost,
+    required this.profit,
+    required this.profitMargin,
+    required this.roi,
+    required this.classification,
+  });
+
+  final String offerId;
+  final String currency;
+  final double totalCost;
+  final double profit;
+  final double? profitMargin;
+  final double? roi;
+  final String classification;
+
+  factory Opportunity.fromJson(Map<String, dynamic> json) {
+    return Opportunity(
+      offerId: json['offer_id'] as String? ?? '',
+      currency: json['currency'] as String? ?? 'UNKNOWN',
+      totalCost: _doubleValue(json['total_cost']) ?? 0,
+      profit: _doubleValue(json['profit']) ?? 0,
+      profitMargin: _doubleValue(json['profit_margin']),
+      roi: _doubleValue(json['roi']),
+      classification: json['classification'] as String? ?? 'below_market',
+    );
+  }
+}
+
 class SearchSnapshot {
   const SearchSnapshot({
     required this.query,
@@ -57,6 +186,10 @@ class SearchSnapshot {
     required this.collectionStatus,
     required this.sourceStatuses,
     required this.collectedAt,
+    this.statistics,
+    this.priceCharts = const [],
+    this.opportunities = const [],
+    this.stale = false,
   });
 
   final NormalizedQuery query;
@@ -64,6 +197,10 @@ class SearchSnapshot {
   final String collectionStatus;
   final List<SourceStatus> sourceStatuses;
   final DateTime? collectedAt;
+  final PriceStatistics? statistics;
+  final List<PriceChart> priceCharts;
+  final List<Opportunity> opportunities;
+  final bool stale;
 
   factory SearchSnapshot.fromJson(Map<String, dynamic> json) {
     final sourceJson = json['source_statuses'];
@@ -73,6 +210,23 @@ class SearchSnapshot {
             .map(SourceStatus.fromJson)
             .toList(growable: false)
         : const <SourceStatus>[];
+    final localJson = json['local_analysis'];
+    final local = localJson is Map<String, dynamic> ? localJson : const <String, dynamic>{};
+    final chartJson = local['price_charts'];
+    final charts = chartJson is List
+        ? chartJson
+            .whereType<Map<String, dynamic>>()
+            .map(PriceChart.fromJson)
+            .toList(growable: false)
+        : const <PriceChart>[];
+    final opportunityJson = local['opportunities'];
+    final opportunities = opportunityJson is List
+        ? opportunityJson
+            .whereType<Map<String, dynamic>>()
+            .map(Opportunity.fromJson)
+            .toList(growable: false)
+        : const <Opportunity>[];
+    final statisticsJson = json['statistics'];
 
     return SearchSnapshot(
       query: NormalizedQuery.fromJson(
@@ -82,9 +236,17 @@ class SearchSnapshot {
       collectionStatus: json['collection_status'] as String? ?? 'unknown',
       sourceStatuses: statuses,
       collectedAt: DateTime.tryParse(json['collected_at'] as String? ?? ''),
+      statistics: statisticsJson is Map<String, dynamic>
+          ? PriceStatistics.fromJson(statisticsJson)
+          : null,
+      priceCharts: charts,
+      opportunities: opportunities,
+      stale: json['stale'] as bool? ?? false,
     );
   }
 
   int get availableSourceCount =>
       sourceStatuses.where((source) => source.adapterConfigured).length;
 }
+
+double? _doubleValue(dynamic value) => value is num ? value.toDouble() : null;

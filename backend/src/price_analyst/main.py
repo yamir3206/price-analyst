@@ -9,6 +9,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from price_analyst import __version__
 from price_analyst.ai.client import DisabledGeminiClient
 from price_analyst.api.router import api_router
 from price_analyst.application.search_pipeline import SearchPipeline
@@ -100,12 +101,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 max_search_candidates=app_settings.max_search_candidates,
                 max_detail_candidates=app_settings.max_detail_candidates,
                 source_concurrency=app_settings.source_concurrency,
+                analysis_match_threshold=app_settings.analysis_match_threshold,
+                analysis_max_opportunities=app_settings.analysis_max_opportunities,
             )
             yield
 
     application = FastAPI(
         title=app_settings.app_name,
-        version="0.3.0",
+        version=__version__,
         description=(
             "Deterministic price intelligence API. Marketplace collection and "
             "AI analysis are deliberately separate layers."

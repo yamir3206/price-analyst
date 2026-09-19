@@ -1,11 +1,8 @@
-"""Opportunity calculation contracts.
-
-The calculation service is intentionally a later phase; these typed contracts
-make its inputs and assumptions explicit from the beginning.
-"""
+"""Deterministic opportunity calculation contracts."""
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from price_analyst.domain.enums import Currency, PriceClassification
 from price_analyst.domain.money import Money
 
 
@@ -23,10 +20,12 @@ class OpportunityInputs(BaseModel):
 class OpportunityResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    currency: str
+    offer_id: str | None = Field(default=None, min_length=1)
+    currency: Currency
     total_cost: float = Field(ge=0)
     profit: float
     profit_margin: float | None = None
     roi: float | None = None
     spread: float | None = None
+    classification: PriceClassification = PriceClassification.BELOW_MARKET
     assumptions: OpportunityInputs

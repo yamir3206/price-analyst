@@ -19,4 +19,4 @@ Native runner directories can be generated with:
 flutter create . --platforms=android,windows,web
 ```
 
-The application code deliberately keeps API and state logic outside widgets.
+The application code deliberately keeps API and state logic outside widgets. Search responses now drive the local statistics, per-currency price bars, and deterministic opportunity views; the Gemini screen remains a Phase 5 placeholder.
