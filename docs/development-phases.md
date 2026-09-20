@@ -85,6 +85,7 @@ Phase 6B implemented:
 - TTL cleanup and bounded entry trimming
 - Alembic migration `0002_durable_snapshot_cache`
 - Durable-cache round-trip and expiry tests
+- Repeatable durable-cache p50/p95/max benchmark command
 - Security/deployment baseline documentation
 
 Still pending in later Phase 6 work:
