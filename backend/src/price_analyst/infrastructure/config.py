@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     retry_base_delay_seconds: float = Field(default=0.25, ge=0)
     retry_max_delay_seconds: float = Field(default=2.0, ge=0)
     snapshot_cache_ttl_seconds: int = Field(default=300, ge=0)
+    durable_cache_enabled: bool = False
+    durable_cache_max_entries: int = Field(default=1000, ge=1)
     analysis_match_threshold: float = Field(default=0.55, ge=0, le=1)
     analysis_max_opportunities: int = Field(default=20, ge=0)
 

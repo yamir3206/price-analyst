@@ -79,9 +79,16 @@ Phase 6A implemented:
 - Flutter wholesale query state and structured listing/status UI
 - API request IDs, security headers, no-store responses, private-IP feed rejection, response-size limits, and integration tests
 
+Phase 6B implemented:
+
+- Optional SQLite/PostgreSQL-compatible durable retail and wholesale snapshot caches
+- TTL cleanup and bounded entry trimming
+- Alembic migration `0002_durable_snapshot_cache`
+- Durable-cache round-trip and expiry tests
+- Security/deployment baseline documentation
+
 Still pending in later Phase 6 work:
 
 - Additional specifically authorized wholesale/source adapters and any permitted social-source integration
-- Performance benchmarks and broader durable-cache/persistence work
 - Android packaging and release configuration
-- Full security/threat-model review and deployment hardening
+- Full threat-model review, DNS-aware egress controls, authentication, and deployment hardening

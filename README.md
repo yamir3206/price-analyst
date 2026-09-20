@@ -17,7 +17,8 @@ Phases 1–5 and Phase 6A are implemented. The repository currently contains:
 - Optional server-side Gemini interpretation with bounded input, strict output validation, cache, coalescing, and an explicit analysis endpoint
 - Separate wholesale contracts, bounded public HTTPS JSON-feed adapter, API flow, and Flutter UI
 - Baseline API security headers, request IDs, response-size/URL safeguards, and integration tests
-- SQLite/PostgreSQL-compatible persistence scaffolding
+- Optional bounded SQLite/PostgreSQL durable snapshot caching with migrations
+- Security and deployment baseline documentation
 - A Flutter application shell with RTL support and local statistics, chart, and opportunity views
 - Backend tests and frontend test scaffolding
 

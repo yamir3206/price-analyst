@@ -16,6 +16,23 @@ class StoredSearch(Base):
     payload: Mapped[dict[str, object]] = mapped_column(JSON)
     dataset_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    cache_key: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, unique=True, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class StoredWholesaleSearch(Base):
+    __tablename__ = "wholesale_snapshots"
+
+    search_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    normalized_query: Mapped[str] = mapped_column(String(500), index=True)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    cache_key: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, unique=True, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class SourceHealthRecord(Base):

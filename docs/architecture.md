@@ -17,7 +17,7 @@ query → normalize → source search → deterministic extraction
 - `collectors/` defines the retail marketplace port and owns source-specific adapters. Torob, Basalam, Digikala, and Divar each implement bounded public-HTML search and detail/listing collection in independent packages. Wholesale collection has a separate adapter port, registry, service, and snapshot contract; it cannot silently enter retail results.
 - `normalization/`, `matching/`, and `analysis/` contain deterministic logic. Matching reports evidence and mismatch fields; local analysis calculates per-currency statistics, classifications, chart data, and opportunity references without discarding full offers.
 - `ai/` creates bounded structured Gemini requests and validates responses.
-- `persistence/` owns SQLAlchemy models, repositories, and migrations.
+- `persistence/` owns SQLAlchemy models, durable snapshot caches, repositories, and migrations.
 - `frontend/` contains presentation and client state only.
 
 No marketplace selector, endpoint, or parser belongs in the core pipeline.
@@ -32,6 +32,8 @@ The full dataset is retained for the UI and local analysis. A separate compact d
 
 Gemini output is accepted only when it is a JSON object matching the strict `AIAnalysis` contract. Offer references are checked against the compact offer IDs, and facts, inferences, and uncertainties are separate fields. Successful results are cached by prompt version, model, and dataset hash; identical concurrent requests share one in-flight task. The current cache is process-local and can be replaced by a database-backed implementation later without changing the API boundary.
 
-## Failure behavior
+## Persistence and failure behavior
+
+The default process-local caches keep development simple. An optional SQLAlchemy-backed durable cache persists bounded retail and wholesale snapshots in SQLite or PostgreSQL after migrations are applied; TTL and entry limits still apply.
 
 Source failures are represented per source and never abort a search for other sources. Requests use bounded exponential retries and a per-source minimum interval. Consecutive failures temporarily disable a source through an in-memory circuit breaker. On refresh, the pipeline reuses the last cached offers for a failed or disabled source and marks that source and snapshot as stale. Gemini failures return deterministic data with an explicit AI status.

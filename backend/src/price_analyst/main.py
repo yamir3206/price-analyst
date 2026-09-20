@@ -17,6 +17,7 @@ from price_analyst.ai.cache import InMemoryAIAnalysisCache
 from price_analyst.ai.client import DisabledGeminiClient, GeminiHttpClient
 from price_analyst.ai.service import AIAnalysisService, AIClient
 from price_analyst.api.router import api_router
+from price_analyst.application.ports import SnapshotCache, WholesaleSnapshotCache
 from price_analyst.application.search_pipeline import SearchPipeline
 from price_analyst.application.source_health import SourceHealthTracker
 from price_analyst.application.wholesale_service import WholesaleService
@@ -32,6 +33,11 @@ from price_analyst.collectors.sources.torob import TorobAdapter
 from price_analyst.collectors.wholesale_registry import WholesaleAdapterRegistry
 from price_analyst.infrastructure.config import Settings
 from price_analyst.infrastructure.logging import configure_logging
+from price_analyst.persistence.cache import (
+    SqlAlchemySnapshotCache,
+    SqlAlchemyWholesaleSnapshotCache,
+)
+from price_analyst.persistence.database import create_database_engine, create_session_factory
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -107,7 +113,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 )
             application.state.adapter_registry = registry
             application.state.wholesale_adapter_registry = wholesale_registry
-            application.state.snapshot_cache = InMemorySnapshotCache()
+            database_engine = None
+            snapshot_cache: SnapshotCache
+            wholesale_cache: WholesaleSnapshotCache | None
+            if app_settings.durable_cache_enabled:
+                database_engine = create_database_engine(app_settings.database_url)
+                session_factory = create_session_factory(database_engine)
+                snapshot_cache = SqlAlchemySnapshotCache(
+                    session_factory,
+                    max_entries=app_settings.durable_cache_max_entries,
+                )
+                wholesale_cache = SqlAlchemyWholesaleSnapshotCache(
+                    session_factory,
+                    max_entries=app_settings.durable_cache_max_entries,
+                )
+            else:
+                snapshot_cache = InMemorySnapshotCache()
+                wholesale_cache = None
+            application.state.database_engine = database_engine
+            application.state.snapshot_cache = snapshot_cache
             application.state.source_health = health
             application.state.rate_limiter = rate_limiter
             wholesale_rate_limiter = SourceRateLimiter(
@@ -116,6 +140,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             application.state.wholesale_rate_limiter = wholesale_rate_limiter
             application.state.wholesale_service = WholesaleService(
                 wholesale_registry,
+                cache=wholesale_cache,
                 rate_limiter=wholesale_rate_limiter,
                 cache_ttl_seconds=app_settings.snapshot_cache_ttl_seconds,
                 source_timeout_seconds=app_settings.wholesale_timeout_seconds,
@@ -152,7 +177,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             application.state.search_pipeline = SearchPipeline(
                 registry,
-                cache=application.state.snapshot_cache,
+                cache=snapshot_cache,
                 health=health,
                 rate_limiter=rate_limiter,
                 cache_ttl_seconds=app_settings.snapshot_cache_ttl_seconds,
@@ -164,7 +189,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 analysis_max_opportunities=app_settings.analysis_max_opportunities,
                 ai_service=application.state.ai_analysis_service,
             )
-            yield
+            try:
+                yield
+            finally:
+                if database_engine is not None:
+                    database_engine.dispose()
 
     application = FastAPI(
         title=app_settings.app_name,
