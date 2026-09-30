@@ -88,8 +88,16 @@ Phase 6B implemented:
 - Repeatable durable-cache p50/p95/max benchmark command
 - Security/deployment baseline documentation
 
+Phase 6C implemented:
+
+- Checked-in Flutter Android runner with Gradle wrapper, application manifest, launcher/splash resources, and Kotlin entry point
+- Debug APK packaging workflow with Flutter, Java, and Gradle version pins
+- HTTPS-by-default release configuration with debug-only cleartext support for the Android emulator
+- Private keystore-based release signing template and ignored credential paths
+- Android packaging documentation and artifact upload in CI
+
 Still pending in later Phase 6 work:
 
 - Additional specifically authorized wholesale/source adapters and any permitted social-source integration
-- Android packaging and release configuration
 - Full threat-model review, DNS-aware egress controls, authentication, and deployment hardening
+- Production signing-key ownership, Play/App Store release process, and device acceptance testing

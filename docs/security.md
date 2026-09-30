@@ -41,4 +41,5 @@ The durable cache stores bounded JSON snapshots with TTLs and entry limits. It d
 - DNS rebinding protection or outbound host allowlisting for configured feeds
 - Authentication and authorization if the API becomes multi-user
 - Android release signing and secret/configuration review
+- Production device acceptance and Play release review
 - Dependency and container vulnerability scanning

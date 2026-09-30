@@ -4,7 +4,7 @@ Price Analyst is a cross-platform price-intelligence application for Android, Wi
 
 ## Repository status
 
-Phases 1–5 and Phase 6A are implemented. The repository currently contains:
+Phases 1–5 and Phase 6 wholesale/hardening milestones are implemented. The repository currently contains:
 
 - A typed FastAPI backend foundation
 - Domain models for queries, offers, source health, snapshots, opportunities, and AI analysis
@@ -67,7 +67,7 @@ flutter test
 flutter run -d chrome --dart-define=API_BASE_URL=/api
 ```
 
-For an Android emulator, use a backend URL reachable from the emulator, commonly `http://10.0.2.2:8000`, passed through `API_BASE_URL`. Browser builds should use a relative `/api` URL and a development-server proxy rather than calling `localhost` from browser code.
+For an Android emulator, use a backend URL reachable from the emulator, commonly `http://10.0.2.2:8000`, passed through `API_BASE_URL`. Debug Android builds permit this cleartext address for local development only; release builds require HTTPS. Browser builds should use a relative `/api` URL and a development-server proxy rather than calling `localhost` from browser code. The checked-in Android runner has a reproducible debug-APK workflow; release signing uses private `frontend/android/key.properties` material and is not committed.
 
 ## License
 
