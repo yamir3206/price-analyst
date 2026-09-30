@@ -26,7 +26,16 @@ jobs:
       - name: Dependencies
         run: flutter pub get
       - name: Build debug APK
-        run: flutter build apk --debug --dart-define=API_BASE_URL=https://api.example.invalid
+        run: |
+          set -o pipefail
+          flutter build apk --debug --dart-define=API_BASE_URL=https://api.example.invalid --verbose 2>&1 | tee /tmp/android-build.log
+      - name: Upload Android build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-log
+          path: /tmp/android-build.log
+          if-no-files-found: error
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
