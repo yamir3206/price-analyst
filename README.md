@@ -56,6 +56,17 @@ The health endpoint is available at `GET /api/v1/health`. With no adapters enabl
 
 Copy `.env.example` to `.env` for local configuration. Gemini credentials belong only on the backend and must never be placed in the Flutter application.
 
+## Easy deployment
+
+With Docker Engine and Compose v2 installed:
+
+```bash
+cp .env.example .env
+docker compose -f deploy/docker-compose.yml up --build -d
+```
+
+Open `http://localhost:8080`. The migration job runs before the API, SQLite data is kept in a named volume, and Nginx serves the Flutter web client while proxying `/api/` internally. See [`deploy/README.md`](deploy/README.md) for external PostgreSQL and the optional Caddy HTTPS profile.
+
 ## Flutter development
 
 Flutter/Dart must be installed before running the frontend. From `frontend/`:

@@ -96,8 +96,17 @@ Phase 6C implemented:
 - Private keystore-based release signing template and ignored credential paths
 - Android packaging documentation and artifact upload in CI
 
-Still pending in later Phase 6 work:
+Phase 6D implemented:
+
+- Non-root backend container with bounded runtime configuration
+- Docker Compose deployment for API, migration job, Flutter web client, and internal Nginx proxy
+- Optional Caddy TLS profile for a DNS-backed single-host deployment
+- External PostgreSQL URL support with the psycopg driver
+- Compose configuration and web/API smoke test in CI
+- Deployment runbook, backup/secret guidance, and final threat-model baseline
+
+Still pending after Phase 6:
 
 - Additional specifically authorized wholesale/source adapters and any permitted social-source integration
-- Full threat-model review, DNS-aware egress controls, authentication, and deployment hardening
 - Production signing-key ownership, Play/App Store release process, and device acceptance testing
+- Deployment-specific authentication, outbound DNS/IP allowlisting, monitoring, backups, and independent penetration testing

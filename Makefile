@@ -1,4 +1,5 @@
-.PHONY: backend-install backend-test backend-lint backend-run frontend-analyze frontend-test
+.PHONY: backend-install backend-test backend-lint backend-run frontend-analyze frontend-test \
+	deploy-config deploy-up deploy-down deploy-logs
 
 backend-install:
 	python3 -m pip install -e 'backend[dev]'
@@ -18,3 +19,15 @@ frontend-analyze:
 
 frontend-test:
 	cd frontend && flutter test
+
+deploy-config:
+	docker compose -f deploy/docker-compose.yml config
+
+deploy-up:
+	docker compose -f deploy/docker-compose.yml up --build -d
+
+deploy-down:
+	docker compose -f deploy/docker-compose.yml down
+
+deploy-logs:
+	docker compose -f deploy/docker-compose.yml logs -f api web

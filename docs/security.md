@@ -35,11 +35,19 @@ alembic -c backend/alembic.ini upgrade head
 
 The durable cache stores bounded JSON snapshots with TTLs and entry limits. It does not store API credentials. Database encryption, backup retention, access-control policy, and production connection-pool tuning remain deployment responsibilities.
 
-## Remaining review items
+## Compose deployment baseline
 
-- Threat-model review with the deployment topology and reverse proxy
+- The backend image runs as a non-root user and exposes port 8000 only to the Compose network.
+- A one-shot migration service applies Alembic migrations before the API starts.
+- Nginx serves the Flutter web bundle and proxies only `/api/` to the API container.
+- The default deployment uses a named SQLite volume; an external PostgreSQL URL can be supplied through `DEPLOY_DATABASE_URL`.
+- The optional Caddy profile terminates HTTPS and stores certificate state in named volumes. Do not expose the HTTP web port publicly when using a public hostname.
+- The deployment smoke test starts the stack with all external adapters and Gemini disabled, then checks both the web shell and API health endpoint.
+
+## Remaining deployment review items
+
+- Deployment-specific authentication and authorization if the API becomes multi-user
 - DNS rebinding protection or outbound host allowlisting for configured feeds
-- Authentication and authorization if the API becomes multi-user
-- Android release signing and secret/configuration review
-- Production device acceptance and Play release review
-- Dependency and container vulnerability scanning
+- Database backup/restore drills, encryption, monitoring, and alerting
+- Android release signing, production device acceptance, and Play release review
+- Independent penetration test and dependency/container vulnerability scanning
