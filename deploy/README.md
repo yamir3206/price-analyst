@@ -17,6 +17,7 @@ Open <http://localhost:8080>. The `migrate` service applies all Alembic migratio
 ```bash
 docker compose -f deploy/docker-compose.yml ps
 docker compose -f deploy/docker-compose.yml logs -f api web
+./deploy/backup-sqlite.sh
 docker compose -f deploy/docker-compose.yml down
 ```
 
@@ -30,7 +31,20 @@ The image includes the PostgreSQL driver. Set `DEPLOY_DATABASE_URL` in the shell
 DEPLOY_DATABASE_URL=postgresql+psycopg://price_analyst:replace-me@db.example.com:5432/price_analyst
 ```
 
-The migration and API services use the same value. Keep PostgreSQL credentials outside source control, restrict database network access, and use TLS parameters required by the provider.
+The migration and API services use the same value. Keep PostgreSQL credentials outside source control, restrict database network access, and use TLS parameters required by the provider. Use the provider's `pg_dump`/backup facility for PostgreSQL; `deploy/backup-sqlite.sh` is only for the default SQLite volume.
+
+## Backups and readiness
+
+The API exposes `GET /api/v1/ready` for the Compose healthcheck. It verifies the configured SQL database when durable caching is enabled and does not require marketplace or Gemini availability.
+
+For the default SQLite deployment, create a consistent online backup with:
+
+```bash
+./deploy/backup-sqlite.sh
+# or: make deploy-backup
+```
+
+Backups are written to `backups/`, which is intentionally not a source-controlled directory. Copy them to durable external storage and periodically test restoration with a separate Compose volume.
 
 ## HTTPS on a public host
 

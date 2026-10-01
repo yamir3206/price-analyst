@@ -34,3 +34,6 @@ Thumbs.db
 # Generated reports
 coverage/
 htmlcov/
+
+# Deployment backups
+backups/

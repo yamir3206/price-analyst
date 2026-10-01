@@ -30,3 +30,7 @@ class HealthResponse(BaseModel):
     version: str
     environment: str
     gemini_configured: bool
+
+
+class ReadinessResponse(BaseModel):
+    status: str

@@ -1,5 +1,5 @@
 .PHONY: backend-install backend-test backend-lint backend-run frontend-analyze frontend-test \
-	deploy-config deploy-up deploy-down deploy-logs
+	deploy-config deploy-up deploy-down deploy-logs deploy-backup
 
 backend-install:
 	python3 -m pip install -e 'backend[dev]'
@@ -31,3 +31,6 @@ deploy-down:
 
 deploy-logs:
 	docker compose -f deploy/docker-compose.yml logs -f api web
+
+deploy-backup:
+	./deploy/backup-sqlite.sh

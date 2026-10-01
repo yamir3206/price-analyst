@@ -42,7 +42,9 @@ The durable cache stores bounded JSON snapshots with TTLs and entry limits. It d
 - Nginx serves the Flutter web bundle and proxies only `/api/` to the API container.
 - The default deployment uses a named SQLite volume; an external PostgreSQL URL can be supplied through `DEPLOY_DATABASE_URL`.
 - The optional Caddy profile terminates HTTPS and stores certificate state in named volumes. Do not expose the HTTP web port publicly when using a public hostname.
-- The deployment smoke test starts the stack with all external adapters and Gemini disabled, then checks both the web shell and API health endpoint.
+- The API readiness endpoint checks the configured database without requiring external marketplace or Gemini availability.
+- The deployment smoke test starts the stack with all external adapters and Gemini disabled, then checks both the web shell and API readiness endpoint.
+- SQLite backups use the database engine's online backup API; PostgreSQL backups remain provider/operator responsibilities.
 
 ## Remaining deployment review items
 

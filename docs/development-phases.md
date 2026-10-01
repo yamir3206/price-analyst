@@ -105,8 +105,17 @@ Phase 6D implemented:
 - Compose configuration and web/API smoke test in CI
 - Deployment runbook, backup/secret guidance, and final threat-model baseline
 
-Still pending after Phase 6:
+## Phase 7 — operational safety
+
+Implemented:
+
+- Database-aware `/api/v1/ready` readiness endpoint without changing the existing health contract
+- Compose healthcheck and deployment smoke test using readiness rather than external-source availability
+- Online SQLite backup script and `make deploy-backup` command
+- Deployment threat model covering assets, trust boundaries, SSRF, prompt injection, secrets, containers, TLS, backups, and residual risk
+
+Still pending after Phase 7:
 
 - Additional specifically authorized wholesale/source adapters and any permitted social-source integration
 - Production signing-key ownership, Play/App Store release process, and device acceptance testing
-- Deployment-specific authentication, outbound DNS/IP allowlisting, monitoring, backups, and independent penetration testing
+- Deployment-specific authentication, outbound DNS/IP allowlisting, monitoring, backup restore drills, and independent penetration testing

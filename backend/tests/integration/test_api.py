@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from price_analyst.infrastructure.config import Settings
 from price_analyst.main import create_app
+from price_analyst.persistence.database import Base, create_database_engine
 
 
 def test_health_endpoint_reports_configuration() -> None:
@@ -17,6 +18,39 @@ def test_health_endpoint_reports_configuration() -> None:
     assert body["status"] == "ok"
     assert body["environment"] == "test"
     assert body["gemini_configured"] is False
+
+
+def test_readiness_endpoint_reports_ready_without_durable_database() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_readiness_checks_durable_database(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'ready.db'}"
+    engine = create_database_engine(database_url)
+    Base.metadata.create_all(engine)
+    app = create_app(
+        Settings(
+            environment="test",
+            cors_origins=["*"],
+            durable_cache_enabled=True,
+            database_url=database_url,
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    engine.dispose()
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
 
 
 def test_search_endpoint_returns_truthful_phase_one_snapshot() -> None:
