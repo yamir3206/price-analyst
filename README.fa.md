@@ -576,6 +576,17 @@ DEPLOY_DOMAIN=prices.example.com \
 - [ ] sourceهای واقعی فقط بعد از review حقوقی/فنی و با rate limit مناسب فعال شده‌اند.
 - [ ] برای cloud رایگان، sleep، quota، ephemeral filesystem، credit و پایان trial به کارفرما/کاربر اعلام شده است.
 
+## اسناد مرجع برای توسعهٔ آینده و Agent
+
+برای اینکه توسعه‌های بعدی با قراردادهای فعلی هماهنگ بمانند، Agent باید ابتدا [`AGENTS.md`](AGENTS.md) را بخواند و سپس این اسناد را بررسی کند:
+
+- [`docs/engineering-contract.md`](docs/engineering-contract.md): قوانین معماری، داده، امنیت، performance و backward compatibility
+- [`docs/api-contract.md`](docs/api-contract.md): قرارداد HTTP نسخهٔ v1 و semantics endpointها
+- [`docs/openapi.json`](docs/openapi.json): snapshot ماشین‌خوان OpenAPI؛ پس از تغییر API با `python backend/scripts/export_openapi.py` بازتولید شود
+- [`docs/extension-guide.md`](docs/extension-guide.md): روش افزودن source، endpoint، migration، AI و Flutter بدون شکستن قابلیت‌ها
+- [`docs/roadmap.md`](docs/roadmap.md): milestoneهای آینده و non-goalها
+- [`docs/agent-task-template.md`](docs/agent-task-template.md): قالب تحلیل، برنامه‌ریزی، تست و گزارش هر تغییر
+
 ## لینک‌های داخلی
 
 - [راهنمای انگلیسی پروژه](README.md)

@@ -1,0 +1,1920 @@
+{
+  "components": {
+    "schemas": {
+      "AIAnalysis": {
+        "additionalProperties": false,
+        "properties": {
+          "cheap_offers": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Cheap Offers",
+            "type": "array"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "expensive_offers": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Expensive Offers",
+            "type": "array"
+          },
+          "facts": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Facts",
+            "type": "array"
+          },
+          "inferences": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Inferences",
+            "type": "array"
+          },
+          "market_assessment": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Market Assessment",
+            "type": "string"
+          },
+          "missing_information": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Missing Information",
+            "type": "array"
+          },
+          "potential_opportunities": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Potential Opportunities",
+            "type": "array"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Risks",
+            "type": "array"
+          },
+          "summary": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Summary",
+            "type": "string"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Uncertainties",
+            "type": "array"
+          }
+        },
+        "required": [
+          "confidence"
+        ],
+        "title": "AIAnalysis",
+        "type": "object"
+      },
+      "AIAnalysisEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Hash"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/AIAnalysisStatus",
+            "default": "not_requested"
+          }
+        },
+        "title": "AIAnalysisEnvelope",
+        "type": "object"
+      },
+      "AIAnalysisStatus": {
+        "enum": [
+          "not_requested",
+          "disabled",
+          "cached",
+          "completed",
+          "invalid_response",
+          "failed"
+        ],
+        "title": "AIAnalysisStatus",
+        "type": "string"
+      },
+      "AnalysisRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "AnalysisRequest",
+        "type": "object"
+      },
+      "Availability": {
+        "enum": [
+          "in_stock",
+          "out_of_stock",
+          "unknown"
+        ],
+        "title": "Availability",
+        "type": "string"
+      },
+      "CollectionStatus": {
+        "enum": [
+          "complete",
+          "partial",
+          "no_sources_configured",
+          "failed"
+        ],
+        "title": "CollectionStatus",
+        "type": "string"
+      },
+      "Currency": {
+        "description": "Currency codes used by collected offers.\n\nIRR and IRT are intentionally distinct. The system must not silently convert\nrial to toman because marketplace conventions are not always explicit.",
+        "enum": [
+          "IRR",
+          "IRT",
+          "UNKNOWN"
+        ],
+        "title": "Currency",
+        "type": "string"
+      },
+      "DeduplicationGroup": {
+        "additionalProperties": false,
+        "description": "Equivalent product offers grouped without deleting source records.",
+        "properties": {
+          "canonical_key": {
+            "minLength": 1,
+            "title": "Canonical Key",
+            "type": "string"
+          },
+          "group_id": {
+            "minLength": 1,
+            "title": "Group Id",
+            "type": "string"
+          },
+          "offer_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Offer Ids",
+            "type": "array"
+          },
+          "representative_offer_id": {
+            "minLength": 1,
+            "title": "Representative Offer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_id",
+          "canonical_key",
+          "representative_offer_id",
+          "offer_ids"
+        ],
+        "title": "DeduplicationGroup",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "gemini_configured": {
+            "title": "Gemini Configured",
+            "type": "boolean"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "version",
+          "environment",
+          "gemini_configured"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LocalAnalysis": {
+        "additionalProperties": false,
+        "description": "All deterministic analysis products derived from a full offer set.",
+        "properties": {
+          "classifications": {
+            "items": {
+              "$ref": "#/components/schemas/OfferClassification"
+            },
+            "title": "Classifications",
+            "type": "array"
+          },
+          "deduplication_groups": {
+            "items": {
+              "$ref": "#/components/schemas/DeduplicationGroup"
+            },
+            "title": "Deduplication Groups",
+            "type": "array"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/OfferMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "opportunities": {
+            "items": {
+              "$ref": "#/components/schemas/OpportunityResult"
+            },
+            "title": "Opportunities",
+            "type": "array"
+          },
+          "price_charts": {
+            "items": {
+              "$ref": "#/components/schemas/PriceChart"
+            },
+            "title": "Price Charts",
+            "type": "array"
+          },
+          "statistics_by_currency": {
+            "items": {
+              "$ref": "#/components/schemas/PriceStatistics"
+            },
+            "title": "Statistics By Currency",
+            "type": "array"
+          }
+        },
+        "title": "LocalAnalysis",
+        "type": "object"
+      },
+      "Marketplace": {
+        "description": "Supported or planned source identifiers.",
+        "enum": [
+          "torob",
+          "basalam",
+          "digikala",
+          "divar",
+          "instagram",
+          "other"
+        ],
+        "title": "Marketplace",
+        "type": "string"
+      },
+      "Money": {
+        "additionalProperties": false,
+        "description": "An exact monetary value.\n\n``amount`` is stored as an integer in the source currency's smallest\nmeaningful unit. Conversion between IRR and IRT is deliberately outside\nthis model and must be explicit when it is ever introduced.",
+        "properties": {
+          "amount": {
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "title": "Money",
+        "type": "object"
+      },
+      "NormalizedQuery": {
+        "additionalProperties": false,
+        "description": "A deterministic representation of the user's search intent.",
+        "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Attributes",
+            "type": "object"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "normalized_text": {
+            "minLength": 1,
+            "title": "Normalized Text",
+            "type": "string"
+          },
+          "original": {
+            "minLength": 1,
+            "title": "Original",
+            "type": "string"
+          },
+          "variants": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "original",
+          "normalized_text"
+        ],
+        "title": "NormalizedQuery",
+        "type": "object"
+      },
+      "Offer": {
+        "additionalProperties": false,
+        "description": "Normalized offer retained in the full deterministic dataset.",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Availability",
+            "default": "unknown"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/OfferCondition",
+            "default": "unknown"
+          },
+          "details_fetched": {
+            "default": false,
+            "title": "Details Fetched",
+            "type": "boolean"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Metadata",
+            "type": "object"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "normalized_title": {
+            "minLength": 1,
+            "title": "Normalized Title",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "offer_id": {
+            "minLength": 1,
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "original_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "product_url": {
+            "minLength": 1,
+            "title": "Product Url",
+            "type": "string"
+          },
+          "seller": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seller"
+          },
+          "shipping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shipping_information": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipping Information"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Marketplace"
+          },
+          "source_offer_id": {
+            "minLength": 1,
+            "title": "Source Offer Id",
+            "type": "string"
+          },
+          "specifications": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Specifications",
+            "type": "object"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer_id",
+          "source",
+          "source_offer_id",
+          "title",
+          "normalized_title",
+          "product_url",
+          "observed_at"
+        ],
+        "title": "Offer",
+        "type": "object"
+      },
+      "OfferClassification": {
+        "additionalProperties": false,
+        "description": "Deterministic relative-price classification for one matched offer.",
+        "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/PriceClassification",
+            "default": "unknown"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "distance_from_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance From Median"
+          },
+          "offer_id": {
+            "minLength": 1,
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "relative_to_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative To Median"
+          }
+        },
+        "required": [
+          "offer_id"
+        ],
+        "title": "OfferClassification",
+        "type": "object"
+      },
+      "OfferCondition": {
+        "enum": [
+          "new",
+          "used",
+          "refurbished",
+          "unknown"
+        ],
+        "title": "OfferCondition",
+        "type": "string"
+      },
+      "OfferMatch": {
+        "additionalProperties": false,
+        "description": "Evidence-backed match decision between a query and one offer.",
+        "properties": {
+          "is_match": {
+            "default": false,
+            "title": "Is Match",
+            "type": "boolean"
+          },
+          "matched_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matched Fields",
+            "type": "array"
+          },
+          "mismatched_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mismatched Fields",
+            "type": "array"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "offer_id": {
+            "minLength": 1,
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "offer_id",
+          "score"
+        ],
+        "title": "OfferMatch",
+        "type": "object"
+      },
+      "OpportunityInputs": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_resale_price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "other_costs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payment_fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform_fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "purchase_price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "shipping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "purchase_price",
+          "expected_resale_price"
+        ],
+        "title": "OpportunityInputs",
+        "type": "object"
+      },
+      "OpportunityResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assumptions": {
+            "$ref": "#/components/schemas/OpportunityInputs"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/PriceClassification",
+            "default": "below_market"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Id"
+          },
+          "profit": {
+            "title": "Profit",
+            "type": "number"
+          },
+          "profit_margin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit Margin"
+          },
+          "roi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roi"
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spread"
+          },
+          "total_cost": {
+            "minimum": 0.0,
+            "title": "Total Cost",
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "total_cost",
+          "profit",
+          "assumptions"
+        ],
+        "title": "OpportunityResult",
+        "type": "object"
+      },
+      "PriceChart": {
+        "additionalProperties": false,
+        "description": "Price points and reference lines for one explicit currency.",
+        "properties": {
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "p25": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P25"
+          },
+          "p75": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P75"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PriceChartPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency"
+        ],
+        "title": "PriceChart",
+        "type": "object"
+      },
+      "PriceChartPoint": {
+        "additionalProperties": false,
+        "description": "One deterministic point for a marketplace price chart.",
+        "properties": {
+          "amount": {
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/PriceClassification",
+            "default": "unknown"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Id"
+          },
+          "label": {
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "offer_id": {
+            "minLength": 1,
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Marketplace"
+          }
+        },
+        "required": [
+          "offer_id",
+          "source",
+          "label",
+          "amount",
+          "currency"
+        ],
+        "title": "PriceChartPoint",
+        "type": "object"
+      },
+      "PriceClassification": {
+        "description": "Relative deterministic price labels; not investment advice.",
+        "enum": [
+          "below_market",
+          "typical",
+          "above_market",
+          "low_outlier",
+          "high_outlier",
+          "unknown"
+        ],
+        "title": "PriceClassification",
+        "type": "string"
+      },
+      "PriceStatistics": {
+        "additionalProperties": false,
+        "description": "Statistics calculated from comparable prices in one currency.",
+        "properties": {
+          "coefficient_of_variation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coefficient Of Variation"
+          },
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maximum": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "minimum": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum"
+          },
+          "p10": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10"
+          },
+          "p25": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P25"
+          },
+          "p50": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50"
+          },
+          "p75": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P75"
+          },
+          "p90": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90"
+          },
+          "price_range": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Range"
+          },
+          "standard_deviation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard Deviation"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "PriceStatistics",
+        "type": "object"
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "SearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "SearchRequest",
+        "type": "object"
+      },
+      "SearchSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_analysis": {
+            "$ref": "#/components/schemas/AIAnalysisEnvelope"
+          },
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          },
+          "local_analysis": {
+            "$ref": "#/components/schemas/LocalAnalysis"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/Offer"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "query": {
+            "$ref": "#/components/schemas/NormalizedQuery"
+          },
+          "search_id": {
+            "format": "uuid",
+            "title": "Search Id",
+            "type": "string"
+          },
+          "source_statuses": {
+            "items": {
+              "$ref": "#/components/schemas/SourceStatus"
+            },
+            "title": "Source Statuses",
+            "type": "array"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "statistics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceStatistics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "query",
+          "collection_status"
+        ],
+        "title": "SearchSnapshot",
+        "type": "object"
+      },
+      "SourceState": {
+        "enum": [
+          "ready",
+          "not_configured",
+          "unavailable",
+          "rate_limited",
+          "stale"
+        ],
+        "title": "SourceState",
+        "type": "string"
+      },
+      "SourceStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter_configured": {
+            "default": false,
+            "title": "Adapter Configured",
+            "type": "boolean"
+          },
+          "average_response_time_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Response Time Ms"
+          },
+          "candidate_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "failure_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Failure Count",
+            "type": "integer"
+          },
+          "last_failure": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Failure"
+          },
+          "last_success": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success"
+          },
+          "offer_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Offer Count",
+            "type": "integer"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Marketplace"
+          },
+          "stale_data_available": {
+            "default": false,
+            "title": "Stale Data Available",
+            "type": "boolean"
+          },
+          "stale_data_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Data Timestamp"
+          },
+          "state": {
+            "$ref": "#/components/schemas/SourceState"
+          },
+          "temporary_disabled_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporary Disabled Until"
+          }
+        },
+        "required": [
+          "source",
+          "state"
+        ],
+        "title": "SourceStatus",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WholesaleListing": {
+        "additionalProperties": false,
+        "description": "A public wholesale listing with unknown fields left explicitly empty.",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Availability",
+            "default": "unknown"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/OfferCondition",
+            "default": "unknown"
+          },
+          "listing_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Listing Id",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "minimum_order_quantity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Order Quantity"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "product_url": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Url"
+          },
+          "public_contact": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Contact"
+          },
+          "shipping_information": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipping Information"
+          },
+          "source": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "listing_id",
+          "source",
+          "title"
+        ],
+        "title": "WholesaleListing",
+        "type": "object"
+      },
+      "WholesaleSearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          },
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "WholesaleSearchRequest",
+        "type": "object"
+      },
+      "WholesaleSnapshot": {
+        "additionalProperties": false,
+        "description": "Wholesale results never enter the retail SearchSnapshot pipeline.",
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          },
+          "listings": {
+            "items": {
+              "$ref": "#/components/schemas/WholesaleListing"
+            },
+            "maxItems": 100,
+            "title": "Listings",
+            "type": "array"
+          },
+          "query": {
+            "$ref": "#/components/schemas/NormalizedQuery"
+          },
+          "search_id": {
+            "format": "uuid",
+            "title": "Search Id",
+            "type": "string"
+          },
+          "source_statuses": {
+            "items": {
+              "$ref": "#/components/schemas/WholesaleSourceStatus"
+            },
+            "maxItems": 20,
+            "title": "Source Statuses",
+            "type": "array"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query",
+          "collection_status"
+        ],
+        "title": "WholesaleSnapshot",
+        "type": "object"
+      },
+      "WholesaleSourceStatus": {
+        "additionalProperties": false,
+        "description": "Truthful health information for one independently configured source.",
+        "properties": {
+          "adapter_configured": {
+            "default": false,
+            "title": "Adapter Configured",
+            "type": "boolean"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "listing_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Listing Count",
+            "type": "integer"
+          },
+          "source": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          },
+          "stale_data_available": {
+            "default": false,
+            "title": "Stale Data Available",
+            "type": "boolean"
+          },
+          "stale_data_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stale Data Timestamp"
+          },
+          "state": {
+            "$ref": "#/components/schemas/SourceState"
+          }
+        },
+        "required": [
+          "source",
+          "state"
+        ],
+        "title": "WholesaleSourceStatus",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Deterministic price intelligence API. Marketplace collection and AI analysis are deliberately separate layers.",
+    "title": "Price Analyst API",
+    "version": "0.4.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/ready": {
+      "get": {
+        "description": "Report whether configured local dependencies can accept traffic.",
+        "operationId": "readiness_api_v1_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/searches": {
+      "post": {
+        "operationId": "create_search_api_v1_searches_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Search",
+        "tags": [
+          "searches"
+        ]
+      }
+    },
+    "/api/v1/searches/analysis": {
+      "post": {
+        "description": "Explicitly request optional AI interpretation of a deterministic snapshot.",
+        "operationId": "analyze_search_api_v1_searches_analysis_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze Search",
+        "tags": [
+          "searches"
+        ]
+      }
+    },
+    "/api/v1/wholesale/searches": {
+      "post": {
+        "operationId": "create_wholesale_search_api_v1_wholesale_searches_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WholesaleSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WholesaleSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Wholesale Search",
+        "tags": [
+          "wholesale"
+        ]
+      }
+    }
+  }
+}

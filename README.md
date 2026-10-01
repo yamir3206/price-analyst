@@ -42,6 +42,14 @@ FastAPI API
 
 The full deterministic dataset and the compact Gemini dataset are separate representations. Gemini never receives raw HTML, product URLs, or unnecessary adapter fields, and the application remains useful when Gemini or a marketplace is unavailable. Ordinary searches do not call Gemini; use `POST /api/v1/searches/analysis` for the explicit optional interpretation step.
 
+## Development contracts for future agents
+
+- [`AGENTS.md`](AGENTS.md) is the repository-level agent context and change workflow.
+- [`docs/engineering-contract.md`](docs/engineering-contract.md) records architecture, data, security, reliability, and compatibility invariants.
+- [`docs/api-contract.md`](docs/api-contract.md) documents the v1 HTTP behavior; [`docs/openapi.json`](docs/openapi.json) is its generated machine-readable snapshot.
+- [`docs/extension-guide.md`](docs/extension-guide.md) explains how to add sources, endpoints, migrations, AI behavior, or Flutter features safely.
+- [`docs/roadmap.md`](docs/roadmap.md) lists future candidates without treating them as automatic authorization.
+
 ## Backend development
 
 ```bash
