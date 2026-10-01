@@ -25,6 +25,7 @@ Flutter Web/Android/Windows → FastAPI → آداپتورهای مستقل من
 
 | هدف | روش پیشنهادی | وضعیت داده و محدودیت |
 |---|---|---|
+| ساده‌ترین اجرا روی ویندوز بدون Flutter | دوبار کلیک روی `run-windows.bat` (رابط وب فارسی `webui/`) | فقط Python 3.11+ لازم است؛ رابط و API فقط روی همین رایانه |
 | فقط آزمایش توسعه‌دهنده | Python virtualenv + backend و Flutter جدا | ساده، ولی باید دو process اجرا شود |
 | اجرای کامل با کمترین تنظیم | Docker Compose | API، وب و migration یک‌جا؛ SQLite در volume نام‌دار |
 | دموی موقت API | Render یا Railway | خواب/سهمیه/اعتبار و filesystem موقتی را بپذیرید؛ production فرض نکنید |
@@ -288,6 +289,30 @@ flutter build web --release --dart-define=API_BASE_URL=https://api.example.com
 ```
 
 ساخت خروجی Android debug و release در [`frontend/README.md`](frontend/README.md) توضیح داده شده است. signing key را وارد مخزن نکنید.
+
+## ۶-الف) رابط وب فارسی سبک (بدون Flutter، Node یا Docker)
+
+اگر نمی‌خواهید Flutter نصب کنید، پوشهٔ [`webui/`](webui/README.md) یک رابط کاربری فارسی و راست‌به‌چپ دارد که فقط با HTML/CSS/JavaScript ساده و یک اسکریپت Python (فقط کتابخانهٔ استاندارد) اجرا می‌شود.
+
+**ویندوز — یک کلیک:**
+
+1. Python نسخهٔ ۳٫۱۱ یا بالاتر را از <https://www.python.org/downloads/> نصب کنید و گزینهٔ **Add python.exe to PATH** را تیک بزنید.
+2. روی فایل **`run-windows.bat`** در ریشهٔ مخزن دوبار کلیک کنید.
+
+در اجرای اول، `.venv` ساخته می‌شود، backend با `pip` نصب می‌شود و `.env` از روی `.env.example` ساخته می‌شود؛ سپس backend اجرا و مرورگر روی `http://127.0.0.1:8080` باز می‌شود. اجراهای بعدی بلافاصله شروع می‌شوند. برای نصب دوباره، پوشهٔ `.venv` را حذف کنید.
+
+**اجرای دستی (هر سیستم‌عامل):**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate        # لینوکس/مک: . .venv/bin/activate
+python -m pip install -e backend
+python webui/serve.py --start-backend --open
+```
+
+اگر backend از قبل اجرا شده، فقط رابط را اجرا کنید: `python webui/serve.py --backend http://127.0.0.1:8000`
+
+این رابط شامل جستجوی خرده‌فروشی، وضعیت منابع، آمار و نمودار جداگانه برای هر واحد پول، فرصت‌ها، تحلیل اختیاری Gemini و جستجوی عمده‌فروشی جداگانه است. مرورگر فقط به آدرس‌های نسبی `/api/v1/...` درخواست می‌دهد و `serve.py` آن‌ها را به backend منتقل می‌کند؛ بنابراین تنظیم CORS لازم نیست. رابط به‌صورت پیش‌فرض فقط روی `127.0.0.1` در دسترس است، چون API احراز هویت ندارد.
 
 ## ۷) تنظیمات کامل و معنای متغیرها
 
