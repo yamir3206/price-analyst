@@ -27,6 +27,7 @@ Dependency direction:
 - `ai/` owns compact projection, token/character budgets, the server-side client, strict output validation, cache, and in-flight deduplication.
 - `persistence/` owns SQLAlchemy models, database engines, cache implementations, and migration compatibility.
 - `frontend/` owns presentation, client state, and JSON decoding; it does not collect sources or hold server secrets.
+- `webui/` is an optional dependency-free Persian web client (static HTML/CSS/JS plus a standard-library launcher/proxy). It follows the same rules as `frontend/`: it consumes only the public v1 API, holds no secrets, never converts currencies, and must handle `null`, partial, stale, disabled, and unknown enum values. When an API change affects `frontend/`, update `webui/app.js` and `webui/tests` too.
 
 A source selector, marketplace URL, HTML parser, provider credential, or HTTP retry policy must not leak into the domain model or generic business analysis.
 

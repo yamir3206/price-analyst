@@ -1,4 +1,5 @@
 .PHONY: backend-install backend-test backend-lint backend-run api-contract frontend-analyze frontend-test \
+	webui-run webui-test \
 	deploy-config deploy-up deploy-down deploy-logs deploy-backup
 
 backend-install:
@@ -22,6 +23,12 @@ frontend-analyze:
 
 frontend-test:
 	cd frontend && flutter test
+
+webui-run:
+	python3 webui/serve.py --start-backend
+
+webui-test:
+	python3 -m unittest discover -s webui/tests -v
 
 deploy-config:
 	docker compose -f deploy/docker-compose.yml config

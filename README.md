@@ -74,6 +74,15 @@ With Docker Engine and Compose v2 installed:
 
 The script creates `.env` from `.env.example` when needed and starts the full stack. Open `http://localhost:8080`. The migration job runs before the API, SQLite data is kept in a named volume, and Nginx serves the Flutter web client while proxying `/api/` internally. Readiness is available at `/api/v1/ready`; SQLite backups use `make deploy-backup`. See [`deploy/README.md`](deploy/README.md) for external PostgreSQL and the optional Caddy HTTPS profile, [`README.fa.md`](README.fa.md) for the complete Persian deployment guide, and [`docs/threat-model.md`](docs/threat-model.md) for deployment assumptions.
 
+## Lightweight Persian web UI (no Flutter)
+
+[`webui/`](webui/README.md) is a right-to-left Persian interface built with plain HTML/CSS/JavaScript and a Python standard-library launcher that serves it and proxies `/api/v1/` to the backend. On Windows, install Python 3.11+ and double-click `run-windows.bat`; elsewhere:
+
+```bash
+python -m pip install -e backend
+python webui/serve.py --start-backend --open   # http://127.0.0.1:8080
+```
+
 ## Flutter development
 
 Flutter/Dart must be installed before running the frontend. From `frontend/`:
