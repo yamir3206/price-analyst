@@ -1,0 +1,9 @@
+/.gradle
+/captures/
+/local.properties
+GeneratedPluginRegistrant.java
+
+# Release credentials and private signing material.
+key.properties
+**/*.keystore
+**/*.jks

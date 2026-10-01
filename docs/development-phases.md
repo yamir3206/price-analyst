@@ -1,0 +1,121 @@
+# Development phases
+
+## Phase 1 — foundation
+
+Implemented:
+
+- FastAPI application and typed domain contracts
+- Adapter registry and application pipeline boundary
+- Deterministic query normalization
+- SQLite/PostgreSQL-compatible persistence foundation and migration
+- Flutter shell and feature navigation
+- API, model, normalization, and compact dataset tests
+
+## Phase 2 — one deterministic source
+
+Implemented for Torob:
+
+- Public search and product-page adapter
+- JSON-LD-first extraction with deterministic DOM fallback
+- Persian digit/currency/availability/condition parsing
+- Search candidate and seller-offer mapping
+- Bounded detail-page collection
+- Deterministic candidate ranking
+- In-memory snapshot cache and refresh bypass
+- Fixture-driven parser and adapter tests
+
+The adapter is disabled by default and must be explicitly enabled through configuration.
+
+
+## Phase 3 — remaining marketplaces
+
+Implemented:
+
+- Independent public-HTML adapters for Basalam, Digikala, and Divar
+- Shared bounded retries with exponential backoff and per-source request pacing
+- In-memory source health tracking and temporary circuit breaking
+- Partial result responses and stale cached-offer fallback during refresh
+- Fixture-driven parser, adapter, retry, health, and refresh tests
+
+All marketplace adapters remain disabled by default and must be explicitly enabled through configuration.
+
+## Phase 4 — local analysis
+
+Implemented:
+
+- Deterministic query-to-offer matching with explicit evidence and mismatch reporting
+- Exact-repeat removal plus cross-marketplace product-equivalence groups without deleting full offers
+- Per-currency percentile, mean, spread, standard deviation, and variation statistics
+- Below-market, typical, above-market, and outlier classifications
+- Per-currency chart points with median and quartile reference lines
+- Conservative opportunity calculations using market median as an explicit resale-reference assumption
+- Snapshot/API integration with configurable match threshold and opportunity limit
+
+Currencies are never silently converted. Unknown-currency prices are retained in the full offer set but excluded from comparable statistics by default.
+
+## Phase 5 — AI layer
+
+Implemented as an optional post-analysis layer:
+
+- Bounded, deterministic compact offer selection with opportunity/match relevance and source diversity
+- Character/token estimation and deterministic reduction of offer text and statistics
+- Server-side Gemini REST client with timeout, bounded retry, JSON-only response parsing, and strict Pydantic validation
+- Output separation for facts, inferences, and uncertainties, plus offer-reference validation
+- Successful-result TTL caching and identical in-flight request coalescing
+- Explicit `POST /api/v1/searches/analysis` trigger; ordinary searches remain Gemini-free by default
+- Flutter request state and structured AI result/status UI
+- Phase 5 unit and integration tests and configuration/documentation
+
+Gemini remains disabled when `PRICE_ANALYST_GEMINI_API_KEY` is empty. The process-local cache is intentionally a bounded Phase 5 boundary; durable cache storage and broader operational hardening are not part of this phase.
+
+## Phase 6 — wholesale and hardening
+
+Phase 6A implemented:
+
+- Separate wholesale contracts, adapter protocol, registry, cache, bounded service, and API route
+- A source-neutral public HTTPS JSON-feed adapter that is enabled only for an explicitly reviewed URL
+- Minimum order quantity, unit price with explicit currency, supplier, shipping, location, public contact, and observed-time fields
+- Stale wholesale snapshot fallback without mixing wholesale listings into retail `SearchSnapshot`
+- Flutter wholesale query state and structured listing/status UI
+- API request IDs, security headers, no-store responses, private-IP feed rejection, response-size limits, and integration tests
+
+Phase 6B implemented:
+
+- Optional SQLite/PostgreSQL-compatible durable retail and wholesale snapshot caches
+- TTL cleanup and bounded entry trimming
+- Alembic migration `0002_durable_snapshot_cache`
+- Durable-cache round-trip and expiry tests
+- Repeatable durable-cache p50/p95/max benchmark command
+- Security/deployment baseline documentation
+
+Phase 6C implemented:
+
+- Checked-in Flutter Android runner with Gradle wrapper, application manifest, launcher/splash resources, and Kotlin entry point
+- Debug APK packaging workflow with Flutter, Java, and Gradle version pins
+- HTTPS-by-default release configuration with debug-only cleartext support for the Android emulator
+- Private keystore-based release signing template and ignored credential paths
+- Android packaging documentation and artifact upload in CI
+
+Phase 6D implemented:
+
+- Non-root backend container with bounded runtime configuration
+- Docker Compose deployment for API, migration job, Flutter web client, and internal Nginx proxy
+- Optional Caddy TLS profile for a DNS-backed single-host deployment
+- External PostgreSQL URL support with the psycopg driver
+- Compose configuration and web/API smoke test in CI
+- Deployment runbook, backup/secret guidance, and final threat-model baseline
+
+## Phase 7 — operational safety
+
+Implemented:
+
+- Database-aware `/api/v1/ready` readiness endpoint without changing the existing health contract
+- Compose healthcheck and deployment smoke test using readiness rather than external-source availability
+- Online SQLite backup script and `make deploy-backup` command
+- Deployment threat model covering assets, trust boundaries, SSRF, prompt injection, secrets, containers, TLS, backups, and residual risk
+
+Still pending after Phase 7:
+
+- Additional specifically authorized wholesale/source adapters and any permitted social-source integration
+- Production signing-key ownership, Play/App Store release process, and device acceptance testing
+- Deployment-specific authentication, outbound DNS/IP allowlisting, monitoring, backup restore drills, and independent penetration testing

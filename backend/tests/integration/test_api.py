@@ -1,0 +1,130 @@
+from fastapi.testclient import TestClient
+
+from price_analyst.infrastructure.config import Settings
+from price_analyst.main import create_app
+from price_analyst.persistence.database import Base, create_database_engine
+
+
+def test_health_endpoint_reports_configuration() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["environment"] == "test"
+    assert body["gemini_configured"] is False
+
+
+def test_readiness_endpoint_reports_ready_without_durable_database() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_readiness_checks_durable_database(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'ready.db'}"
+    engine = create_database_engine(database_url)
+    Base.metadata.create_all(engine)
+    app = create_app(
+        Settings(
+            environment="test",
+            cors_origins=["*"],
+            durable_cache_enabled=True,
+            database_url=database_url,
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/ready")
+
+    engine.dispose()
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_search_endpoint_returns_truthful_phase_one_snapshot() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/searches",
+            json={"query": "Samsung S24 Ultra 256 GB"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["query"]["brand"] == "samsung"
+    assert body["query"]["capacity"] == "256GB"
+    assert body["offers"] == []
+    assert body["statistics"] is None
+    assert body["local_analysis"]["matches"] == []
+    assert body["collection_status"] == "no_sources_configured"
+    assert {status["source"] for status in body["source_statuses"]} == {
+        "torob",
+        "basalam",
+        "digikala",
+        "divar",
+    }
+
+
+def test_search_request_rejects_unknown_fields() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/searches",
+            json={"query": "laptop", "raw_html": "must not be accepted"},
+        )
+
+    assert response.status_code == 422
+
+
+def test_analysis_is_explicit_and_disabled_without_a_server_key() -> None:
+    app = create_app(
+        Settings(environment="test", cors_origins=["*"], torob_enabled=False)
+    )
+
+    with TestClient(app) as client:
+        normal = client.post("/api/v1/searches", json={"query": "laptop"})
+        analyzed = client.post("/api/v1/searches/analysis", json={"query": "laptop"})
+
+    assert normal.status_code == 200
+    assert normal.json()["ai_analysis"]["status"] == "not_requested"
+    assert analyzed.status_code == 200
+    assert analyzed.json()["ai_analysis"]["status"] == "disabled"
+    assert analyzed.json()["offers"] == []
+
+
+def test_wholesale_endpoint_is_explicit_and_truthful_without_a_feed() -> None:
+    app = create_app(Settings(environment="test", cors_origins=["*"]))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/wholesale/searches",
+            json={"query": "laptop"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["collection_status"] == "no_sources_configured"
+    assert body["listings"] == []
+    assert body["source_statuses"] == []
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-request-id"]

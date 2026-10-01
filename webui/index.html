@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>تحلیلگر قیمت</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">﷼</span>
+      <div>
+        <h1>تحلیلگر قیمت</h1>
+        <small>جمع‌آوری قطعی، تحلیل محلی، تفسیر اختیاری هوش مصنوعی</small>
+      </div>
+    </div>
+    <div id="health" class="health" title="وضعیت سرویس">
+      <span class="dot"></span><span id="health-text">در حال بررسی سرویس…</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="retail" role="tab">خرده‌فروشی</button>
+    <button class="tab" data-tab="wholesale" role="tab">عمده‌فروشی</button>
+    <button class="tab" data-tab="about" role="tab">وضعیت و راهنما</button>
+  </nav>
+
+  <main>
+    <!-- ============================ RETAIL ============================ -->
+    <section id="tab-retail" class="panel active">
+      <form id="retail-form" class="search card" autocomplete="off">
+        <label for="retail-query">نام محصول</label>
+        <div class="row">
+          <input id="retail-query" type="search" maxlength="200" required
+                 placeholder="مثلاً Samsung Galaxy S24 Ultra 256GB">
+          <button type="submit" class="primary" data-mode="search">جستجو</button>
+          <button type="button" class="secondary" id="retail-ai">جستجو + تحلیل هوش مصنوعی</button>
+        </div>
+        <label class="check"><input type="checkbox" id="retail-refresh"> نادیده گرفتن حافظهٔ موقت (دریافت تازه)</label>
+      </form>
+
+      <div id="retail-error" class="alert error hidden"></div>
+      <div id="retail-loading" class="loading hidden"><span class="spinner"></span> در حال جمع‌آوری و تحلیل…</div>
+
+      <div id="retail-result" class="hidden">
+        <div id="retail-banner"></div>
+
+        <div class="grid two">
+          <div class="card">
+            <h2>درک پرس‌وجو</h2>
+            <dl id="query-info" class="kv"></dl>
+          </div>
+          <div class="card">
+            <h2>وضعیت منابع</h2>
+            <div id="source-statuses"></div>
+          </div>
+        </div>
+
+        <nav class="subtabs" role="tablist">
+          <button class="subtab active" data-sub="offers">پیشنهادها <span id="count-offers" class="badge">0</span></button>
+          <button class="subtab" data-sub="stats">آمار و نمودار</button>
+          <button class="subtab" data-sub="opps">فرصت‌ها <span id="count-opps" class="badge">0</span></button>
+          <button class="subtab" data-sub="ai">تحلیل هوش مصنوعی</button>
+        </nav>
+
+        <div id="sub-offers" class="subpanel active">
+          <div class="toolbar">
+            <label class="check"><input type="checkbox" id="only-matches"> فقط موارد منطبق</label>
+            <select id="offer-sort" aria-label="مرتب‌سازی">
+              <option value="price-asc">ارزان‌ترین</option>
+              <option value="price-desc">گران‌ترین</option>
+              <option value="match">بیشترین انطباق</option>
+              <option value="source">منبع</option>
+            </select>
+          </div>
+          <div id="offers"></div>
+        </div>
+
+        <div id="sub-stats" class="subpanel">
+          <div id="stats"></div>
+        </div>
+
+        <div id="sub-opps" class="subpanel">
+          <p class="muted">فرصت‌ها به‌صورت محلی و محافظه‌کارانه محاسبه می‌شوند و توصیهٔ سرمایه‌گذاری نیستند.</p>
+          <div id="opportunities"></div>
+        </div>
+
+        <div id="sub-ai" class="subpanel">
+          <div id="ai"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ WHOLESALE ============================ -->
+    <section id="tab-wholesale" class="panel">
+      <form id="wholesale-form" class="search card" autocomplete="off">
+        <label for="wholesale-query">نام کالا (عمده)</label>
+        <div class="row">
+          <input id="wholesale-query" type="search" maxlength="200" required placeholder="مثلاً لپ‌تاپ">
+          <button type="submit" class="primary">جستجوی عمده</button>
+        </div>
+        <label class="check"><input type="checkbox" id="wholesale-refresh"> نادیده گرفتن حافظهٔ موقت</label>
+        <p class="muted">نتایج عمده‌فروشی کاملاً جدا از خرده‌فروشی هستند و وارد آمار خرده‌فروشی نمی‌شوند.</p>
+      </form>
+      <div id="wholesale-error" class="alert error hidden"></div>
+      <div id="wholesale-loading" class="loading hidden"><span class="spinner"></span> در حال جستجو…</div>
+      <div id="wholesale-result" class="hidden">
+        <div id="wholesale-banner"></div>
+        <div class="card"><h2>وضعیت منابع عمده</h2><div id="wholesale-statuses"></div></div>
+        <div id="wholesale-listings"></div>
+      </div>
+    </section>
+
+    <!-- ============================ ABOUT ============================ -->
+    <section id="tab-about" class="panel">
+      <div class="grid two">
+        <div class="card">
+          <h2>وضعیت سرویس</h2>
+          <dl id="service-info" class="kv"></dl>
+          <button type="button" class="secondary" id="recheck">بررسی دوباره</button>
+        </div>
+        <div class="card">
+          <h2>روند تحلیل</h2>
+          <ol>
+            <li>جمع‌آوری قطعی از منابع فعال</li>
+            <li>نرمال‌سازی و حذف موارد تکراری</li>
+            <li>محاسبهٔ محلی آمار، طبقه‌بندی و فرصت‌ها</li>
+            <li>تفسیر اختیاری Gemini (فقط با درخواست صریح)</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card">
+        <h2>نکته‌ها</h2>
+        <ul>
+          <li>همهٔ منابع به‌صورت پیش‌فرض <b>غیرفعال</b> هستند. برای فعال‌سازی، پس از بررسی قوانین هر منبع، مقدارهای <code>PRICE_ANALYST_*_ENABLED</code> را در فایل <code>.env</code> تغییر دهید و برنامه را دوباره اجرا کنید.</li>
+          <li>ریال (IRR) و تومان (IRT) هرگز به یکدیگر تبدیل نمی‌شوند؛ هر قیمت با واحد اصلی خودش نمایش داده می‌شود.</li>
+          <li>کلید Gemini فقط در سمت سرور (<code>.env</code>) نگهداری می‌شود و هرگز به مرورگر ارسال نمی‌شود.</li>
+          <li>این رابط فقط روی همین رایانه (<code>127.0.0.1</code>) در دسترس است؛ API احراز هویت ندارد.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="muted">Price Analyst — رابط وب فارسی</footer>
+  <script src="app.js"></script>
+</body>
+</html>

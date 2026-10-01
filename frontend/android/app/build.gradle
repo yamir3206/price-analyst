@@ -1,0 +1,89 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+import java.util.Properties
+
+final Properties keystoreProperties = new Properties()
+final File keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { stream -> keystoreProperties.load(stream) }
+}
+
+android {
+    namespace = "com.yamir3206.price_analyst"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.yamir3206.price_analyst"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        manifestPlaceholders.usesCleartextTraffic = "false"
+    }
+
+    if (keystorePropertiesFile.exists()) {
+        signingConfigs {
+            release {
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                storeFile = keystoreProperties["storeFile"]
+                    ? file(keystoreProperties["storeFile"])
+                    : null
+                storePassword = keystoreProperties["storePassword"]
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Cleartext HTTP is permitted only for local emulator development.
+            manifestPlaceholders.usesCleartextTraffic = "true"
+        }
+        release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.release
+            }
+            manifestPlaceholders.usesCleartextTraffic = "false"
+        }
+    }
+}
+
+def validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        def requiredProperties = ["storePassword", "keyPassword", "keyAlias", "storeFile"]
+        def missingProperties = requiredProperties.findAll {
+            !keystoreProperties.getProperty(it)
+        }
+        if (!keystorePropertiesFile.exists() || !missingProperties.isEmpty()) {
+            throw new GradleException(
+                "Release signing requires android/key.properties with storePassword, " +
+                    "keyPassword, keyAlias, and storeFile."
+            )
+        }
+        if (!file(keystoreProperties.getProperty("storeFile")).isFile()) {
+            throw new GradleException("The release signing keystore does not exist.")
+        }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(validateReleaseSigning)
+}
+
+flutter { 
+    source = "../.."
+}

@@ -1,0 +1,74 @@
+services:
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      PRICE_ANALYST_ENVIRONMENT: production
+      PRICE_ANALYST_HOST: 0.0.0.0
+      PRICE_ANALYST_DATABASE_URL: ${DEPLOY_DATABASE_URL:-sqlite:////data/price_analyst.db}
+      PRICE_ANALYST_DURABLE_CACHE_ENABLED: "true"
+    working_dir: /app/backend
+    command: ["alembic", "-c", "/app/backend/alembic.ini", "upgrade", "head"]
+    volumes:
+      - app-data:/data
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      PRICE_ANALYST_ENVIRONMENT: production
+      PRICE_ANALYST_HOST: 0.0.0.0
+      PRICE_ANALYST_DATABASE_URL: ${DEPLOY_DATABASE_URL:-sqlite:////data/price_analyst.db}
+      PRICE_ANALYST_DURABLE_CACHE_ENABLED: "true"
+    expose:
+      - "8000"
+    volumes:
+      - app-data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${DEPLOY_WEB_PORT:-8080}:80"
+
+  caddy:
+    image: caddy:2.8-alpine
+    profiles: ["tls"]
+    environment:
+      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:

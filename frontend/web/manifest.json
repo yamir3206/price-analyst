@@ -1,0 +1,9 @@
+{
+  "name": "Price Analyst",
+  "short_name": "Price Analyst",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#2457a6",
+  "description": "Deterministic price intelligence"
+}
