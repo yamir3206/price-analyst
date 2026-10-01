@@ -7,10 +7,10 @@ The Compose bundle runs the Flutter web client, FastAPI API, and migration job t
 Requirements: Docker Engine with Compose v2.
 
 ```bash
-cp .env.example .env
-# Keep public sources and Gemini disabled unless they have been reviewed.
-docker compose -f deploy/docker-compose.yml up --build -d
+./deploy/quick-start.sh
 ```
+
+The script checks for Docker, creates `.env` from `.env.example` if needed, and starts the stack. Keep public sources and Gemini disabled unless they have been reviewed.
 
 Open <http://localhost:8080>. The `migrate` service applies all Alembic migrations before the API starts. SQLite data is kept in the `app-data` named volume. Useful commands:
 

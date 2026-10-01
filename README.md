@@ -61,11 +61,10 @@ Copy `.env.example` to `.env` for local configuration. Gemini credentials belong
 With Docker Engine and Compose v2 installed:
 
 ```bash
-cp .env.example .env
-docker compose -f deploy/docker-compose.yml up --build -d
+./deploy/quick-start.sh
 ```
 
-Open `http://localhost:8080`. The migration job runs before the API, SQLite data is kept in a named volume, and Nginx serves the Flutter web client while proxying `/api/` internally. Readiness is available at `/api/v1/ready`; SQLite backups use `make deploy-backup`. See [`deploy/README.md`](deploy/README.md) for external PostgreSQL and the optional Caddy HTTPS profile, and [`docs/threat-model.md`](docs/threat-model.md) for deployment assumptions.
+The script creates `.env` from `.env.example` when needed and starts the full stack. Open `http://localhost:8080`. The migration job runs before the API, SQLite data is kept in a named volume, and Nginx serves the Flutter web client while proxying `/api/` internally. Readiness is available at `/api/v1/ready`; SQLite backups use `make deploy-backup`. See [`deploy/README.md`](deploy/README.md) for external PostgreSQL and the optional Caddy HTTPS profile, [`README.fa.md`](README.fa.md) for the complete Persian deployment guide, and [`docs/threat-model.md`](docs/threat-model.md) for deployment assumptions.
 
 ## Flutter development
 
