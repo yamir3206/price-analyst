@@ -34,6 +34,10 @@ python webui/serve.py --backend http://127.0.0.1:8000
 
 Options: `--host` (default `127.0.0.1`), `--port` (default `8080`), `--backend-port` (default `8000`), `--backend URL`, `--start-backend`, `--open`.
 
+## Troubleshooting
+
+- **`[WinError 10013] ... forbidden by its access permissions` or "port in use":** Windows reserves some port ranges (Hyper-V, WSL, Docker), or another program is using the port. The launcher checks ports 8000 (backend) and 8080 (UI) before using them and automatically switches to a free port, printing the address it chose. The browser opens the right address. To choose ports yourself, pass e.g. `run-windows.bat --port 8090 --backend-port 8010`. To see the reserved ranges, run `netsh interface ipv4 show excludedportrange protocol=tcp`.
+
 ## Features
 
 - Retail search (`POST /api/v1/searches`) with offers, match score, price classification, source status, and partial/stale/no-sources banners
