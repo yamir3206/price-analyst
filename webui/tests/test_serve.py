@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import http.client
 import json
+import socket
 import sys
 import threading
 import unittest
@@ -52,7 +53,7 @@ class ServeTests(unittest.TestCase):
         cls.backend = ThreadingHTTPServer(("127.0.0.1", 0), FakeBackend)
         _start(cls.backend)
         backend_url = f"http://127.0.0.1:{cls.backend.server_address[1]}"
-        cls.ui = ThreadingHTTPServer(("127.0.0.1", 0), serve.make_handler(backend_url))
+        cls.ui = serve.UIServer(("127.0.0.1", 0), serve.make_handler(backend_url))
         _start(cls.ui)
         cls.port = cls.ui.server_address[1]
 
@@ -118,7 +119,7 @@ class ServeTests(unittest.TestCase):
         self.assertEqual(self.request("GET", "/api/v2/anything")[0], 404)
 
     def test_unreachable_backend_returns_502(self) -> None:
-        ui = ThreadingHTTPServer(("127.0.0.1", 0), serve.make_handler("http://127.0.0.1:9"))
+        ui = serve.UIServer(("127.0.0.1", 0), serve.make_handler("http://127.0.0.1:9"))
         _start(ui)
         try:
             conn = http.client.HTTPConnection("127.0.0.1", ui.server_address[1], timeout=10)
@@ -129,6 +130,20 @@ class ServeTests(unittest.TestCase):
         finally:
             ui.shutdown()
             ui.server_close()
+
+    def test_occupied_port_detected_and_replaced(self) -> None:
+        with socket.socket() as blocker:
+            blocker.bind(("127.0.0.1", 0))
+            blocker.listen()
+            busy = blocker.getsockname()[1]
+            self.assertFalse(serve.port_is_bindable("127.0.0.1", busy))
+            chosen = serve.choose_port("127.0.0.1", busy, "test")
+            self.assertNotEqual(chosen, busy)
+            self.assertTrue(serve.port_is_bindable("127.0.0.1", chosen))
+
+    def test_free_preferred_port_is_kept(self) -> None:
+        port = serve.free_port("127.0.0.1")
+        self.assertEqual(serve.choose_port("127.0.0.1", port, "test"), port)
 
     def test_invalid_backend_url_rejected(self) -> None:
         with self.assertRaises(ValueError):

@@ -20,6 +20,7 @@ import argparse
 import http.client
 import os
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -170,6 +171,50 @@ class UIRequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(payload)
 
 
+class UIServer(ThreadingHTTPServer):
+    # On Windows SO_REUSEADDR lets a socket share a port another program already
+    # uses, so it is disabled there and binding fails loudly instead.
+    allow_reuse_address = sys.platform != "win32"
+    daemon_threads = True
+
+
+def port_is_bindable(host: str, port: int) -> bool:
+    """True if ``host:port`` can be bound right now.
+
+    Catches ports in use and, on Windows, ports in reserved/excluded ranges
+    (Hyper-V, WSL, Docker), which fail with WinError 10013.
+    """
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    with socket.socket(family, socket.SOCK_STREAM) as probe:
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)  # Windows only
+        if exclusive is not None:
+            probe.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        try:
+            probe.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def free_port(host: str) -> int:
+    """Ask the OS for a currently free port (never inside a reserved range)."""
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    with socket.socket(family, socket.SOCK_STREAM) as probe:
+        probe.bind((host, 0))
+        return int(probe.getsockname()[1])
+
+
+def choose_port(host: str, preferred: int, what: str) -> int:
+    if preferred and port_is_bindable(host, preferred):
+        return preferred
+    port = free_port(host)
+    print(
+        f"[ui] port {preferred} is unavailable for the {what} (in use or reserved by "
+        f"Windows); using port {port} instead."
+    )
+    return port
+
+
 def make_handler(backend_url: str) -> type[UIRequestHandler]:
     parsed = urllib.parse.urlsplit(backend_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -184,6 +229,7 @@ def start_backend(host: str, port: int) -> subprocess.Popen[bytes]:
     command = [
         sys.executable, "-m", "uvicorn", "price_analyst.main:app",
         "--app-dir", str(BACKEND_SRC), "--host", host, "--port", str(port),
+        "--no-use-colors",  # plain cmd.exe windows would show raw ANSI codes
     ]
     print(f"[ui] starting backend: {' '.join(command)}")
     return subprocess.Popen(command, cwd=str(REPO_ROOT), env=env)
@@ -206,6 +252,24 @@ def wait_for_backend(backend_url: str, process: subprocess.Popen[bytes], timeout
     return False
 
 
+def launch_backend(preferred_port: int) -> tuple[subprocess.Popen[bytes] | None, str]:
+    """Start uvicorn on a usable port, retrying on a fresh port if binding fails."""
+    port = choose_port("127.0.0.1", preferred_port, "backend")
+    for attempt in range(3):
+        url = f"http://127.0.0.1:{port}"
+        process = start_backend("127.0.0.1", port)
+        if wait_for_backend(url, process, timeout=60):
+            return process, url
+        if process.poll() is None:  # running but never healthy: a real problem
+            process.terminate()
+            break
+        if attempt < 2:
+            port = free_port("127.0.0.1")
+            print(f"[ui] backend could not start; retrying on port {port} ...")
+    print("[ui] backend did not become healthy; check the log above.", file=sys.stderr)
+    return None, ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Price Analyst Persian web UI")
     parser.add_argument("--host", default="127.0.0.1",
@@ -218,23 +282,32 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--backend-port", type=int, default=8000)
     parser.add_argument("--open", action="store_true", help="open the UI in the default browser")
     args = parser.parse_args(argv)
-
-    backend_url = args.backend or f"http://127.0.0.1:{args.backend_port}"
-    handler = make_handler(backend_url)
+    # Show launcher messages immediately and in order with uvicorn's output.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(line_buffering=True)
 
     backend_process: subprocess.Popen[bytes] | None = None
-    if args.start_backend:
-        backend_process = start_backend("127.0.0.1", args.backend_port)
-        if not wait_for_backend(backend_url, backend_process, timeout=60):
-            print("[ui] backend did not become healthy; check the log above.", file=sys.stderr)
-            if backend_process.poll() is None:
-                backend_process.terminate()
+    if args.start_backend and args.backend is None:
+        backend_process, backend_url = launch_backend(args.backend_port)
+        if backend_process is None:
             return 1
+    else:
+        backend_url = args.backend or f"http://127.0.0.1:{args.backend_port}"
+        if args.start_backend:
+            print("[ui] --backend was given, so --start-backend is ignored.", file=sys.stderr)
+    handler = make_handler(backend_url)
 
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    server.daemon_threads = True
+    ui_port = choose_port(args.host, args.port, "web UI")
+    try:
+        server = UIServer((args.host, ui_port), handler)
+    except OSError:
+        ui_port = free_port(args.host)
+        print(f"[ui] could not bind the web UI port; using port {ui_port} instead.")
+        server = UIServer((args.host, ui_port), handler)
     shown_host = "127.0.0.1" if args.host in {"0.0.0.0", "::"} else args.host
-    url = f"http://{shown_host}:{args.port}/"
+    url = f"http://{shown_host}:{ui_port}/"
     print(f"[ui] Persian UI:  {url}")
     print(f"[ui] backend API: {backend_url}  (proxied at {API_PREFIX})")
     print("[ui] press Ctrl+C to stop")
